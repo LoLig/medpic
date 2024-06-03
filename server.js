@@ -19,11 +19,11 @@ const HOST = process.env.HOST || '0.0.0.0'; // Default to listen on all network 
 
 // Create a MySQL pool
 const pool = mysql.createPool({
-    host: '192.168.1.15',
-    port: '3307',
-    user: 'ernst',
-    password: '009510.Piet!',
-    database: 'medpic',
+    host: 'https://web0098.zxcs.nl',
+    port: '2222',
+    user: 'u72967p69489_medpic',
+    password: '7puy#sd58josPZyY',
+    database: 'u72967p69489_medpicdb',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
