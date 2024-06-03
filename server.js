@@ -19,6 +19,19 @@ const HOST = process.env.HOST || '0.0.0.0'; // Default to listen on all network 
 
 // Create a MySQL pool
 const pool = mysql.createPool({
+    host: 'web0098.zxcs.nl',
+    port: '2222',
+    user: 'u72967p69489_medpic',
+    password: '7puy#sd58josPZyY',
+    database: 'u72967p69489_medpicdb',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
+/*
+// Create a MySQL pool
+const pool = mysql.createPool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
@@ -28,6 +41,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
+*/
 
 async function testDatabaseConnection() {
     try {
