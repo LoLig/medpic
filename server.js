@@ -19,7 +19,7 @@ const HOST = process.env.HOST || '0.0.0.0'; // Default to listen on all network 
 
 // Create a MySQL pool
 const pool = mysql.createPool({
-    host: 'https://web0098.zxcs.nl',
+    host: 'web0098.zxcs.nl',
     port: '2222',
     user: 'u72967p69489_medpic',
     password: '7puy#sd58josPZyY',
