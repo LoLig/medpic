@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <title>MedPic</title>
+    <link rel="icon" href="/images/favicon.png" type="image/png"> <!-- Favicon for browsers -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png"> <!-- Apple touch icon for iOS home screen -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <script>
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, function(err) {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Call updateLoginState or other initialization functions here if needed
+
+        // Detect if the user is on a mobile device. This regex covers most cases.
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // Get references to the button and the message
+        const cameraButton = document.getElementById('capture-btn');
+        const mobileOnlyMessage = document.getElementById('mobile-only-message');
+        const adminButton = document.getElementById('admin-btn');
+        const superadminButton = document.getElementById('super-admin-btn');
+
+        if (isMobile) {
+            // Show the camera button and hide the message
+            cameraButton.style.display = 'block';
+            mobileOnlyMessage.style.display = 'none';
+            adminButton.style.display = 'none';
+            superadminButton.style.display = 'none';
+        } else {
+            // Hide the camera button and show the message
+            cameraButton.style.display = 'none';
+            mobileOnlyMessage.style.display = 'block';
+        }
+    });
+
+    let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    </script>
+
+    <h1>MedPic</h1>
+    <!-- File input element for capturing images -->
+    <button id="capture-btn" class="btn-camera">Open camera</button>
+    <div id="mobile-only-message" style="display: none; text-align: center; padding: 20px;">
+        Foto's maken werkt alleen vanaf je mobiele telefoon.
+    </div>
+    <!-- Add a login button -->
+    <button id="login-btn" onclick="showLoginForm()" class="btn">Login</button>
+    <!-- Logged in message -->
+    <button id="admin-btn" style="display: none;" class="btn">Admin</button>
+    <button id="super-admin-btn" style="display: none;" class="btn">Super Admin</button>
+    <div id="logged-in" onclick="showLogoutPopup()">Ingelogd</div>
+
+    <input type="file" accept="image/*;capture=camera" id="camera-input" style="display: none;" capture>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+    function showLoginForm() {
+        Swal.fire({
+            title: 'Login',
+            html:
+                '<input id="username" class="swal2-input" placeholder="Email">' +
+                '<input id="password" type="password" class="swal2-input" placeholder="Paswoord" onkeydown="handleEnter(event)">' +
+                '<a href="#" id="forgot-password" style="color: #555; display: block; margin-top: 10px; text-align: center;">Wachtwoord vergeten?</a>', // Add this line
+            focusConfirm: false,
+            showCancelButton: true, // Ensure there's a cancel button to close the modal
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#c89a0c',
+            didOpen: () => { // Use the didOpen hook to attach the click event listener
+                document.getElementById('forgot-password').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Call your function to handle password reset here
+                    showForgotPasswordForm(); // Ensure this function is implemented
+                });
+            },
+            preConfirm: async () => {
+                const username = Swal.getPopup().querySelector('#username').value;
+                const password = Swal.getPopup().querySelector('#password').value;
+
+                if (!username || !password) {
+                    Swal.showValidationMessage('Email and paswoord verplicht');
+                    return false; // Don't close Swal on invalid input
+                }
+
+                try {
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+                    if (data.isDefaultPassword) {
+                        showChangePasswordPrompt(data.userData.username);
+                    } else {
+                        if (data.success) {
+                            localStorage.setItem('jwtToken', data.token); // Save the token
+                            localStorage.setItem('isLoggedIn', 'true');
+                            localStorage.setItem('userData', JSON.stringify(data.userData)); // Store user details
+                            isLoggedIn = true; // Update isLoggedIn variable
+                            updateLoginState(); // Ensure UI is updated based on the login state
+
+                            if (data.isFirstLogin) {
+                                showChangePasswordPrompt(data.userData.username);
+                            }
+                        } else {
+                            throw new Error('Ongeldige email en paswoord');
+                        }
+                    }
+                } catch (error) {
+                  console.error('Error logging in:', error);
+                  if (error.message === 'Ongeldige email en paswoord') {
+                      Swal.fire('Error!', error.message, 'error');
+                      Swal.fire({
+                              title: 'Error!',
+                              text: 'Ongeldige email en paswoord.',
+                              icon: 'error',
+                              confirmButtonText: 'Opnieuw proberen',
+                              confirmButtonColor: '#c89a0c',
+                          }).then((result) => {
+                              if (result.isConfirmed) {
+                                  showLoginForm();  // Show the login form again if the user confirms
+                              }
+                          });
+                  } else {
+                    Swal.fire({
+                            title: 'Error!',
+                            text: 'Login mislukt. probeer het nog eens.',
+                            icon: 'error',
+                            confirmButtonText: 'Opnieuw proberen',
+                            confirmButtonColor: '#c89a0c',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                showLoginForm();  // Show the login form again if the user confirms
+                            }
+                        });
+                  }
+                }
+            }
+        });
+    }
+
+    function handleEnter(event) {
+        if (event.key === "Enter") {
+            Swal.clickConfirm(); // Simulate clicking the confirm button
+        }
+    }
+
+    function showForgotPasswordForm() {
+        Swal.fire({
+            title: 'Wachtwoord vergeten',
+            input: 'email',
+            inputLabel: 'Voer je e-mailadres in',
+            confirmButtonText: 'Reset Wachtwoord',
+            confirmButtonColor: '#c89a0c',
+            showCancelButton: true,
+            preConfirm: (email) => {
+                return fetch('/api/users/request-password-reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    Swal.showValidationMessage(`Request failed: ${error}`);
+                });
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('Geslaagd!', 'Als het e-mailadres bij ons bekend is, sturen we een link om je wachtwoord te resetten.', 'success');
+            }
+        });
+    }
+
+
+    function showChangePasswordPrompt(username) {
+        Swal.fire({
+            title: 'Nieuw wachtwoord instellen',
+            html: `
+                <input id="new-password" type="password" class="swal2-input" placeholder="Nieuw wachtwoord">
+                <input id="confirm-password" type="password" class="swal2-input" placeholder="Bevestig nieuw wachtwoord">`,
+            focusConfirm: false,
+            preConfirm: () => {
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                if (newPassword !== confirmPassword) {
+                    Swal.showValidationMessage('Wachtwoorden komen niet overeen');
+                    return false;
+                }
+                return { newPassword, confirmPassword };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updatePassword(username, result.value.newPassword);
+            }
+        });
+    }
+
+    function updatePassword(username, newPassword) {
+        fetch('/api/users/update-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, newPassword })
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to update password');
+            }
+            return response.json();
+        }).then(data => {
+            Swal.fire('Success!', 'Wachtwoord is bijgewerkt.', 'success');
+        }).catch(error => {
+            console.error('Error updating password:', error);
+            Swal.fire('Error!', 'Er ging iets mis bij het bijwerken van het wachtwoord.', 'error');
+        });
+    }
+
+    function showLogoutPopup() {
+        Swal.fire({
+            title: 'Uitloggen',
+            text: 'Weet je zeker dat je wilt uitloggen?',
+            icon: 'question',
+            iconColor: '#c89a0c',
+            showCancelButton: true,
+            confirmButtonText: 'Log uit',
+            confirmButtonColor: '#8b0000',
+            cancelButtonText: 'Annuleer',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                isLoggedIn = false;
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('jwtToken');
+                localStorage.removeItem('userData'); // Clear user details
+                updateLoginState();
+            }
+        });
+    }
+
+    document.getElementById('capture-btn').addEventListener('click', function() {
+        if (!isLoggedIn) {
+            showLoginForm();
+        } else {
+            document.getElementById('camera-input').click();
+        }
+    });
+
+    document.getElementById('super-admin-btn').addEventListener('click', function() {
+        // Clear current body content or hide it instead of clearing, based on your needs
+        document.body.innerHTML = ''; // This removes everything, consider hiding if necessary
+
+        // Create a container for the new layout that allows top alignment within the flex-centered body
+        const adminPanelContainer = document.createElement('div');
+        adminPanelContainer.style.minHeight = '100vh'; // Ensure it can expand to at least the full height of the viewport
+        adminPanelContainer.style.display = 'flex';
+        adminPanelContainer.style.flexDirection = 'column';
+        adminPanelContainer.style.alignItems = 'center';
+
+        // Create the admin panel content
+        const adminPanelContent = `
+            <h1 style="margin-top: 40;">MedPic</h1>
+            <h2>Administratie</h2>
+            <div class="admin-controls">
+                <button id="settings-btn" class="btn-admin-control">Instellingen</button>
+                <button id="hap-btn" class="btn-admin-control">Huisartsenpraktijken</button>
+                <button id="organisaties-btn" class="btn-admin-control">Organisaties</button>
+                <button id="users-btn" class="btn-admin-control">Gebruikers</button>
+            </div>
+            <div id="admin-content"></div>
+        `;
+
+        adminPanelContainer.innerHTML = adminPanelContent;
+        document.body.appendChild(adminPanelContainer);
+
+        // Define a function to handle highlighting buttons
+        function highlightButton(activeButtonId) {
+            const buttons = document.querySelectorAll('.btn-admin-control');
+            buttons.forEach(button => {
+                if(button.id === activeButtonId) {
+                    button.classList.add('btn-admin-control-active'); // Highlight active button
+                } else {
+                    button.classList.remove('btn-admin-control-active'); // Remove highlight from other buttons
+                }
+            });
+        }
+
+        // Modify existing event listeners to include highlighting logic
+        document.getElementById('settings-btn').addEventListener('click', function() {
+            loadSettings(); // Your existing function to load content
+            highlightButton('settings-btn'); // Highlight this button
+        });
+
+        document.getElementById('hap-btn').addEventListener('click', function() {
+            loadHAPs(); // Your existing function to load content
+            highlightButton('hap-btn'); // Highlight this button
+        });
+
+        document.getElementById('organisaties-btn').addEventListener('click', function() {
+            loadOrganizations(); // Your existing function to load content
+            highlightButton('organisaties-btn'); // Highlight this button
+        });
+
+        document.getElementById('users-btn').addEventListener('click', function() {
+            loadUsers(); // Your existing function to load content
+            highlightButton('users-btn'); // Highlight this button
+        });
+
+        // Initial load, if needed right away
+        // loadOrganizations();
+        // Optionally, automatically trigger one of the buttons to be clicked/highlighted on load
+        document.getElementById('settings-btn').click();
+    });
+
+    function loadHAPs() {
+      fetch('/api/haps')
+          .then(response => response.json())
+          .then(data => {
+              const adminContent = document.getElementById('admin-content');
+              adminContent.innerHTML = ''; // Clear previous content
+
+              // Ensure the settingscontainer is cleared before adding new buttons
+              const settingsContainer = document.getElementById('settings-container');
+              if (settingsContainer) {
+                  settingsContainer.innerHTML = '';
+              }
+
+              // Create and add the fixed row at the top
+              const fixedRow = document.createElement('div');
+              fixedRow.classList.add('hap-item');
+              fixedRow.style.backgroundColor = '#444'; // Optional: different background color for the header
+
+              // Use similar structure as dynamic rows for consistent styling
+              const hapheaderContainer = document.createElement('div');
+              hapheaderContainer.style.flexGrow = '1';
+
+              const hapheaderNumber = document.createElement('span');
+              hapheaderNumber.classList.add('hap-number');
+              hapheaderNumber.innerHTML = `<strong>#</strong>`;
+              hapheaderContainer.appendChild(hapheaderNumber);
+
+              const hapheaderName = document.createElement('span');
+              hapheaderName.classList.add('hap-name');
+              hapheaderName.innerHTML = `<strong>Huisartsenpraktijk</strong>`;
+              hapheaderContainer.appendChild(hapheaderName);
+
+              const hapheaderGroup = document.createElement('span');
+              hapheaderGroup.classList.add('hap-email');
+              hapheaderGroup.innerHTML = `<strong>E-mail</strong>`;
+              hapheaderContainer.appendChild(hapheaderGroup);
+
+              fixedRow.appendChild(hapheaderContainer);
+              adminContent.appendChild(fixedRow); // Append the fixed row to the admin content
+
+              data.haps.forEach((hap, index) => {
+                  const hapItem = document.createElement('div');
+                  hapItem.classList.add('hap-item');
+
+                  // Container for the text elements to keep them aligned
+                  const textContainer = document.createElement('div');
+                  textContainer.style.flexGrow = '1';
+
+                  const hapNumber = document.createElement('span');
+                  hapNumber.classList.add('hap-number');
+                  hapNumber.textContent = `${index + 1}.`;
+                  textContainer.appendChild(hapNumber);
+
+                  const hapName = document.createElement('span');
+                  hapName.classList.add('hap-name');
+                  hapName.textContent = hap.hap;
+                  textContainer.appendChild(hapName);
+
+                  const hapEmail = document.createElement('span');
+                  hapEmail.classList.add('hap-email');
+                  hapEmail.textContent = hap.email;
+                  textContainer.appendChild(hapEmail);
+
+                  hapItem.appendChild(textContainer);
+
+                  // Create the Edit button
+                  const editBtn = document.createElement('button');
+                  editBtn.textContent = 'Edit';
+                  editBtn.classList.add('edit-btn');
+
+                  // Define the Edit button's click event handler
+                  editBtn.onclick = function() {
+                      Swal.fire({
+                          title: 'HAP aanpassen',
+                          html: `<input id="swal-input1" class="swal2-input" placeholder="Huisartsenpraktijk" value="${hap.hap}">` +
+                                `<input id="swal-input2" class="swal2-input" placeholder="E-mail" value="${hap.email}">`,
+                          focusConfirm: false,
+                          showCancelButton: true,
+                          confirmButtonText: 'Opslaan',
+                          confirmButtonColor: '#c89a0c',
+                          cancelButtonText: 'Annuleer',
+                          preConfirm: () => {
+                              return {
+                                  hap: document.getElementById('swal-input1').value,
+                                  email: document.getElementById('swal-input2').value
+                              };
+                          }
+                      }).then((result) => {
+                        if (result.isConfirmed) {
+                          // Assuming you have a function to handle saving the data
+                              saveHAP(hap.id, result.value.hap, result.value.email, () => {
+                                  loadHAPs(); // Reload the organizations upon successful save
+                              });
+                          }
+                      });
+                  };
+
+                  hapItem.appendChild(editBtn);
+
+                  adminContent.appendChild(hapItem);
+              });
+            appendAddHAPButton();
+          });
+    }
+
+    function saveHAP(id, hap, email, callback) {
+        fetch('/api/hap/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include this if you're using token-based authentication
+            },
+            body: JSON.stringify({
+                id: id,
+                hap: hap,
+                email: email
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Updated!', 'HAP succesvol aangepast.', 'success');
+            if (callback) {
+                callback(); // Call the callback function to reload the data
+            }
+        })
+        .catch((error) => {
+            console.error('Error updating HAP:', error);
+            Swal.fire('Error!', 'Er ging iets mis bij het updaten van de HAP.');
+        });
+    }
+
+    function loadOrganizations() {
+      const userData = JSON.parse(localStorage.getItem('userData'));
+      let fetchUrl = '/api/organizations';
+
+      // If the user is an admin, append their HAP ID as a query parameter
+      if (userData.rights === 'admin') {
+          fetchUrl += `?hapId=${userData.hap}`;
+      }
+
+      fetch(fetchUrl)
+          .then(response => response.json())
+          .then(data => {
+              const adminContent = document.getElementById('admin-content');
+              adminContent.innerHTML = ''; // Clear previous content
+
+              // Ensure the settingscontainer is cleared before adding new buttons
+              const settingsContainer = document.getElementById('settings-container');
+              if (settingsContainer) {
+                  settingsContainer.innerHTML = '';
+              }
+
+              // Create and add the fixed row at the top
+              const fixedRow = document.createElement('div');
+              fixedRow.classList.add('organization-item');
+              fixedRow.style.backgroundColor = '#444'; // Optional: different background color for the header
+
+              // Use similar structure as dynamic rows for consistent styling
+              const headerContainer = document.createElement('div');
+              headerContainer.style.flexGrow = '1';
+
+              const headerNumber = document.createElement('span');
+              headerNumber.classList.add('org-number');
+              headerNumber.innerHTML = `<strong>#</strong>`;
+              headerContainer.appendChild(headerNumber);
+
+              const headerName = document.createElement('span');
+              headerName.classList.add('org-name');
+              headerName.innerHTML = `<strong>Organisatie</strong>`;
+              headerContainer.appendChild(headerName);
+
+              const headerGroup = document.createElement('span');
+              headerGroup.classList.add('org-group');
+              headerGroup.innerHTML = `<strong>Groep</strong>`;
+              headerContainer.appendChild(headerGroup);
+
+              fixedRow.appendChild(headerContainer);
+              adminContent.appendChild(fixedRow); // Append the fixed row to the admin content
+
+              data.organizations.forEach((org, index) => {
+                  const orgItem = document.createElement('div');
+                  orgItem.classList.add('organization-item');
+
+                  // Container for the text elements to keep them aligned
+                  const textContainer = document.createElement('div');
+                  textContainer.style.flexGrow = '1';
+
+                  const orgNumber = document.createElement('span');
+                  orgNumber.classList.add('org-number');
+                  orgNumber.textContent = `${index + 1}.`;
+                  textContainer.appendChild(orgNumber);
+
+                  const orgName = document.createElement('span');
+                  orgName.classList.add('org-name');
+                  orgName.textContent = org.organization;
+                  textContainer.appendChild(orgName);
+
+                  const orgGroup = document.createElement('span');
+                  orgGroup.classList.add('org-group');
+                  orgGroup.textContent = org.group;
+                  textContainer.appendChild(orgGroup);
+
+                  orgItem.appendChild(textContainer);
+
+                  // Create the Edit button
+                  const editBtn = document.createElement('button');
+                  editBtn.textContent = 'Edit';
+                  editBtn.classList.add('edit-btn');
+
+                  // Define the Edit button's click event handler
+                  editBtn.onclick = function() {
+                      Swal.fire({
+                          title: 'Organisatie aanpassen',
+                          html: `<input id="swal-input1" class="swal2-input" placeholder="Organization" value="${org.organization}">` +
+                                `<input id="swal-input2" class="swal2-input" placeholder="Group" value="${org.group}">`,
+                          focusConfirm: false,
+                          showCancelButton: true,
+                          confirmButtonText: 'Opslaan',
+                          confirmButtonColor: '#c89a0c',
+                          cancelButtonText: 'Annuleer',
+                          preConfirm: () => {
+                              return {
+                                  organization: document.getElementById('swal-input1').value,
+                                  group: document.getElementById('swal-input2').value
+                              };
+                          }
+                      }).then((result) => {
+                        if (result.isConfirmed) {
+                          // Assuming you have a function to handle saving the data
+                              saveOrganization(org.id, result.value.organization, result.value.group, () => {
+                                  loadOrganizations(); // Reload the organizations upon successful save
+                              });
+                          }
+                      });
+                  };
+
+                  // Create the Delete button
+                  const deleteBtn = document.createElement('button');
+                  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>'; // Use Font Awesome's trash icon
+                  deleteBtn.classList.add('delete-btn');
+
+                  // Define the Edit button's click event handler
+                  deleteBtn.onclick = function() {
+                      Swal.fire({
+                          title: 'Organisatie en gebruikers ervan verwijderen?',
+                          text: "Dit kan niet worden teruggedraaid!",
+                          icon: "warning",
+                          showCancelButton: true,
+                          cancelButtonText: 'Annuleer',
+                          confirmButtonText: 'Verwijder organisatie',
+                          confirmButtonColor: '#c89a0c',
+                          buttons: true,
+                          dangerMode: true,
+                      }).then((result) => {
+                          if (result.isConfirmed) {
+                              deleteOrganizations(org.id, () => {
+                                  loadOrganizations(); // Reload the users upon successful save
+                              });
+                          }
+                      });
+                  };
+
+                  orgItem.appendChild(editBtn);
+
+                  //admin cannot delete it's own HAP
+                  if ((userData.hap !== org.hap) || (org.group !== "Huisartsenpraktijk" && userData.hap === org.hap)) {
+                      orgItem.appendChild(deleteBtn);
+                  }
+
+                  adminContent.appendChild(orgItem);
+              });
+            appendAddOrganizationButton();
+          });
+    }
+
+    function saveOrganization(id, organization, group, callback) {
+        fetch('/api/organizations/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include this if you're using token-based authentication
+            },
+            body: JSON.stringify({
+                id: id,
+                organization: organization,
+                group: group
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Updated!', 'Organisatie succesvol aangepast.', 'success');
+            if (callback) {
+                callback(); // Call the callback function to reload the data
+            }
+        })
+        .catch((error) => {
+            console.error('Error updating organization:', error);
+            Swal.fire('Error!', 'Er ging iets mis bij het updaten van de organisatie.');
+        });
+    }
+
+    function deleteOrganizations(id, callback) {
+        fetch('/api/organization/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include this if you're using token-based authentication
+            },
+            body: JSON.stringify({
+                id: id
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Verwijderd!', 'Organisatie en gebruiker(s) succesvol verwijderd.', 'success');
+            if (callback) {
+                callback(); // Call the callback function to reload the data
+            }
+        })
+        .catch((error) => {
+            console.error('Error deleting organization:', error);
+            Swal.fire('Error!', 'Er ging iets mis bij het verwijderen van de organisatie en gebruiker(s).');
+        });
+    }
+
+    function loadUsers() {
+      const userData = JSON.parse(localStorage.getItem('userData'));
+      let fetchUrl = '/api/users';
+
+      // If the user is an admin, append their HAP ID as a query parameter
+      if (userData.rights === 'admin') {
+          fetchUrl += `?hapId=${userData.hap}`;
+      }
+
+      fetch(fetchUrl)
+      .then(response => {
+          if (!response.ok) {
+              throw new Error('Network response was not ok');
+          }
+          return response.json();
+      })
+      .then(data => {
+          if (!data.users) {
+              throw new Error('No users array in response');
+          }
+              console.log(data); // Check what the server is sending
+              if (!data.users) {
+                  console.error('No users data found', data);
+                  // Optionally handle the case where no users are found or the data is in an unexpected format
+                  return; // Exit the function if the necessary data isn't available
+              }
+              const adminContent = document.getElementById('admin-content');
+              adminContent.innerHTML = ''; // Clear previous content
+
+              // Ensure the settingscontainer is cleared before adding new buttons
+              const settingsContainer = document.getElementById('settings-container');
+              if (settingsContainer) {
+                  settingsContainer.innerHTML = '';
+              }
+
+              // Create and add the fixed row at the top
+              const fixedRow = document.createElement('div');
+              fixedRow.classList.add('user-item');
+              fixedRow.style.backgroundColor = '#444'; // Optional: different background color for the header
+
+              // Use similar structure as dynamic rows for consistent styling
+              const headerContainer = document.createElement('div');
+              headerContainer.style.flexGrow = '1';
+
+              const headerNumber = document.createElement('span');
+              headerNumber.classList.add('usr-number');
+              headerNumber.innerHTML = `<strong>#</strong>`;
+              headerContainer.appendChild(headerNumber);
+
+              const headerName = document.createElement('span');
+              headerName.classList.add('usr-name');
+              headerName.innerHTML = `<strong>Naam</strong>`;
+              headerContainer.appendChild(headerName);
+
+              const headerOrganization = document.createElement('span'); // Correctly named for organization
+              headerOrganization.classList.add('usr-organization');
+              headerOrganization.innerHTML = `<strong>Organisatie</strong>`;
+              headerContainer.appendChild(headerOrganization);
+
+              const headerEmail = document.createElement('span'); // Correctly named for email
+              headerEmail.classList.add('usr-email');
+              headerEmail.innerHTML = `<strong>E-mail adres</strong>`;
+              headerContainer.appendChild(headerEmail);
+
+              const headerRights = document.createElement('span'); // Correctly named for rights
+              headerRights.classList.add('usr-rights');
+              headerRights.innerHTML = `<strong>Rechten</strong>`;
+              headerContainer.appendChild(headerRights);
+
+              fixedRow.appendChild(headerContainer);
+              adminContent.appendChild(fixedRow); // Append the fixed row to the admin content
+
+              data.users.forEach((usr, index) => {
+                  const usrItem = document.createElement('div');
+                  usrItem.classList.add('user-item');
+
+                  // Container for the text elements to keep them aligned
+                  const textContainer = document.createElement('div');
+                  textContainer.style.flexGrow = '1';
+
+                  const usrNumber = document.createElement('span');
+                  usrNumber.classList.add('usr-number');
+                  usrNumber.textContent = `${index + 1}.`;
+                  textContainer.appendChild(usrNumber);
+
+                  const usrName = document.createElement('span');
+                  usrName.classList.add('usr-name');
+                  usrName.textContent = usr.name;
+                  textContainer.appendChild(usrName);
+
+                  const usrOrganization = document.createElement('span');
+                  usrOrganization.classList.add('usr-organization');
+                  usrOrganization.textContent = usr.organization_name; // Adjust based on actual property name
+                  textContainer.appendChild(usrOrganization);
+
+                  const usrEmail = document.createElement('span');
+                  usrEmail.classList.add('usr-email');
+                  usrEmail.textContent = usr.username;
+                  textContainer.appendChild(usrEmail);
+
+                  const usrRights = document.createElement('span');
+                  usrRights.classList.add('usr-rights');
+                  usrRights.textContent = translateRights(usr.rights); // Function to translate rights
+                  textContainer.appendChild(usrRights);
+
+                  usrItem.appendChild(textContainer);
+
+                  // Create the Edit button
+                  const editBtn = document.createElement('button');
+                  editBtn.textContent = 'Edit';
+                  editBtn.classList.add('edit-btn');
+
+                  // Define the Edit button's click event handler
+                  editBtn.onclick = function() {
+                      const userData = JSON.parse(localStorage.getItem('userData') || '{}'); // Retrieve logged-in user data
+                      const isSuperAdmin = userData.rights === 'super-admin'; // Check if the logged-in user is a super-admin
+
+                      let rightsOptionsHtml = `
+                          <option value="user" ${usr.rights === 'user' ? 'selected' : ''}>User</option>
+                          <option value="admin" ${usr.rights === 'admin' ? 'selected' : ''}>Admin</option>
+                      `;
+
+                      if (isSuperAdmin) {
+                          rightsOptionsHtml += `<option value="super-admin" ${usr.rights === 'super-admin' ? 'selected' : ''}>Super Admin</option>`;
+                      }
+
+                      Swal.fire({
+                          title: 'Gebruiker aanpassen',
+                          html: `
+                              <div class="form-group"><label for="swal-input3">Naam:</label><input id="swal-input3" class="swal2-input" placeholder="Naam" value="${usr.name}"></div>
+                              <div class="form-group"><label for="swal-input6">E-mail:</label><input id="swal-input6" class="swal2-input" placeholder="E-mail" value="${usr.username}"></div>
+                              <div class="form-group-drop-down">
+                                  <label for="swal-input7">Rechten:</label>
+                                  <select id="swal-input7" class="swal2-input">
+                                      ${rightsOptionsHtml}
+                                  </select>
+                              </div>`,
+                          focusConfirm: false,
+                          showCancelButton: true,
+                          confirmButtonText: 'Opslaan',
+                          confirmButtonColor: '#c89a0c',
+                          cancelButtonText: 'Annuleer',
+                          preConfirm: () => {
+                              return {
+                                  name: document.getElementById('swal-input3').value,
+                                  email: document.getElementById('swal-input6').value,
+                                  rights: document.getElementById('swal-input7').value
+                              };
+                          }
+                      }).then((result) => {
+                          if (result.isConfirmed) {
+                              saveUser(usr.id, result.value.name, result.value.email, result.value.rights, () => {
+                                  loadUsers(); // Reload the users upon successful save
+                              });
+                          }
+                      });
+                  };
+
+                  // Create the Delete button
+                  const deleteBtn = document.createElement('button');
+                  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>'; // Use Font Awesome's trash icon
+                  deleteBtn.classList.add('delete-btn');
+
+                  // Define the Edit button's click event handler
+                  deleteBtn.onclick = function() {
+                      Swal.fire({
+                          title: 'Gebruiker verwijderen?',
+                          text: "Dit kan niet worden teruggedraaid!",
+                          icon: "warning",
+                          showCancelButton: true,
+                          cancelButtonText: 'Annuleer',
+                          confirmButtonText: 'Verwijder gebruiker',
+                          confirmButtonColor: '#c89a0c',
+                          buttons: true,
+                          dangerMode: true,
+                      }).then((result) => {
+                          if (result.isConfirmed) {
+                              deleteUser(usr.id, () => {
+                                  loadUsers(); // Reload the users upon successful save
+                              });
+                          }
+                      });
+                  };
+
+                  usrItem.appendChild(editBtn);
+
+                  if (userData.id !== usr.id) {
+                      usrItem.appendChild(deleteBtn);
+                  }
+
+                  adminContent.appendChild(usrItem);
+              });
+          appendAddUserButton();
+          });
+    }
+
+    // Helper function to translate rights from database terms to human-readable form
+    function translateRights(rights) {
+        switch (rights) {
+            case 'user':
+                return 'Gebruiker';
+            case 'admin':
+                return 'Admin';
+            case 'super_admin':
+                return 'Super Admin';
+            default:
+                return 'Onbekend'; // Fallback for unknown rights
+        }
+    }
+
+    function saveUser(id, name, email, rights, callback) {
+        fetch('/api/users/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include this if you're using token-based authentication
+            },
+            body: JSON.stringify({
+                id: id,
+                name: name,
+                email: email,
+                rights: rights
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Updated!', 'Gebruiker succesvol aangepast.', 'success');
+            if (callback) {
+                callback(); // Call the callback function to reload the data
+            }
+        })
+        .catch((error) => {
+            console.error('Error updating user:', error);
+            Swal.fire('Error!', 'Er ging iets mis bij het updaten van de gebruiker.');
+        });
+    }
+
+    function deleteUser(id, callback) {
+        fetch('/api/users/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include this if you're using token-based authentication
+            },
+            body: JSON.stringify({
+                id: id
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Verwijderd!', 'Gebruiker succesvol verwijderd.', 'success');
+            if (callback) {
+                callback(); // Call the callback function to reload the data
+            }
+        })
+        .catch((error) => {
+            console.error('Error deleting user:', error);
+            Swal.fire('Error!', 'Er ging iets mis bij het verwijderen van de gebruiker.');
+        });
+    }
+
+    function appendAddHAPButton() {
+        const adminContent = document.getElementById('admin-content');
+        const addHAPBtn = document.createElement('button');
+        addHAPBtn.textContent = '+ Toevoegen';
+        addHAPBtn.classList.add('add-hap-btn'); // Use your existing button styles, or add new ones
+        addHAPBtn.onclick = showAddHAPForm;
+        adminContent.appendChild(addHAPBtn);
+    }
+
+    function showAddHAPForm() {
+        Swal.fire({
+            title: 'Huisartsenpraktijk toevoegen',
+            html: `
+                <input id="name" class="swal2-input" placeholder="Naam praktijk">
+                <input id="user" class="swal2-input" placeholder="Naam adminstrator">
+                <input id="job" class="swal2-input" placeholder="Functie">
+                <input id="email" type="email" class="swal2-input" placeholder="E-mail administrator">`,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Toevoegen',
+            confirmButtonColor: '#c89a0c',
+            cancelButtonText: 'Annuleren',
+            preConfirm: () => {
+                const hapData = {
+                    name: document.getElementById('name').value,
+                    user: document.getElementById('user').value,
+                    job: document.getElementById('job').value,
+                    email: document.getElementById('email').value
+                };
+                return addHAP(hapData);
+            }
+        });
+    }
+
+    function addHAP(hapData) {
+        return fetch('/api/hap/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include this if you're using token-based authentication
+            },
+            body: JSON.stringify(hapData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Toegevoegd!', 'De Huisartsenpraktijk is succesvol toegevoegd.', 'success');
+            loadHAPs(); // Reload users to include the new one
+        })
+        .catch((error) => {
+            console.error('Error adding hap:', error);
+            Swal.fire('Fout!', 'Er ging iets mis bij het toevoegen van de Huisartsenpraktijk.', 'error');
+        });
+    }
+
+    function appendAddOrganizationButton() {
+        const adminContent = document.getElementById('admin-content');
+        const addOrganizationBtn = document.createElement('button');
+        addOrganizationBtn.textContent = '+ Toevoegen';
+        addOrganizationBtn.classList.add('add-organization-btn'); // Use your existing button styles, or add new ones
+        addOrganizationBtn.onclick = showAddOrganizationForm;
+        adminContent.appendChild(addOrganizationBtn);
+    }
+
+    function showAddOrganizationForm() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+
+        let htmlContent = `<div class="form-group"><label for="swal-input3">Naam:</label><input id="name" class="swal2-input" placeholder="Naam"></div>
+                                <div class="form-group"><label for="swal-input5">Groep:</label><input id="group" class="swal2-input" placeholder="Groep"></div>`;
+
+        if (userData && userData.rights === 'super_admin') {
+            // Super-admin: fetch and populate HAP dropdown
+            fetch('/api/hap-names')
+                .then(response => response.json())
+                .then(data => {
+                    const selectElement = document.createElement('select');
+                    selectElement.id = 'hap';
+                    selectElement.classList.add('swal2-input');
+                    data.hapNames.forEach(hap => {
+                        const optionElement = document.createElement('option');
+                        optionElement.value = hap.id; // Use HAP ID as value
+                        optionElement.textContent = hap.name; // Use HAP name as display text
+                        selectElement.appendChild(optionElement);
+                    });
+                    htmlContent += `<div class="form-group-drop-down">
+                                        <label for="hap">Huisartsenpraktijk:</label>
+                                        ${selectElement.outerHTML}
+                                    </div>`;
+                    showSwalDialog(htmlContent);
+                });
+        } else {
+            // Non-super-admin: Display HAP name in a readonly input and HAP ID in a hidden input
+            fetch(`/api/hap-name/${userData.hap}`)
+                .then(response => response.json())
+                .then(data => {
+                    const hapName = data.name;
+                    htmlContent += `<div class="form-group-drop-down">
+                                        <label for="hap-name">Huisartsenpraktijk:</label>
+                                        <input id="hap-name" class="swal2-input" value="${hapName}" readonly>
+                                        <input id="hap" type="hidden" value="${userData.hap}">
+                                    </div>`;
+                    showSwalDialog(htmlContent);
+                })
+                .catch(error => {
+                    console.error('Error fetching HAP name:', error);
+                });
+        }
+    }
+
+    function showSwalDialog(htmlContent) {
+        Swal.fire({
+            title: 'Organisatie toevoegen',
+            html: htmlContent,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Toevoegen',
+            confirmButtonColor: '#c89a0c',
+            cancelButtonText: 'Annuleren',
+            preConfirm: () => {
+                const organizationData = {
+                    name: document.getElementById('name').value,
+                    group: document.getElementById('group').value,
+                    hap: document.getElementById('hap').value // Works for both dropdown and input
+                };
+                return addOrganization(organizationData);
+            }
+        });
+    }
+
+
+    function addOrganization(organizationData) {
+        return fetch('/api/organization/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include this if you're using token-based authentication
+            },
+            body: JSON.stringify(organizationData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Toegevoegd!', 'De Organisatie is succesvol toegevoegd.', 'success');
+            loadOrganizations(); // Reload users to include the new one
+        })
+        .catch((error) => {
+            console.error('Error adding organization:', error);
+            Swal.fire('Fout!', 'Er ging iets mis bij het toevoegen van de Organisatie.', 'error');
+        });
+    }
+
+    function appendAddUserButton() {
+        const adminContent = document.getElementById('admin-content');
+        const addUserBtn = document.createElement('button');
+        addUserBtn.textContent = '+ Toevoegen';
+        addUserBtn.classList.add('add-user-btn'); // Use your existing button styles, or add new ones
+        addUserBtn.onclick = showAddUserForm;
+        adminContent.appendChild(addUserBtn);
+    }
+
+    function showAddUserForm() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        let fetchUrl = '/api/organizations';
+
+        // Append their HAP ID as a query parameter for admin users
+        if (userData.rights === 'admin') {
+            fetchUrl += `?hapId=${userData.hap}`;
+        }
+
+        // Fetch organizations based on the user role
+        fetch(fetchUrl)
+            .then(response => response.json())
+            .then(data => {
+                let organizationsOptions = data.organizations.map(org => `<option value="${org.id}" data-hap="${org.hap}">${org.organization}</option>`).join('');
+
+                // Build HTML for the form
+                let htmlContent = `
+                      <div class="form-group"><label for="name">Naam:</label><input id="name" class="swal2-input" placeholder="Naam"></div>
+                      <div class="form-group"><label for="organization">Organisatie:</label><select id="organization" class="swal2-input">${organizationsOptions}</select></div>
+                      <div class="form-group"><input id="hap" type="hidden"></div>
+                      <div class="form-group-drop-down">
+                        <label for="function">Functie:</label>
+                          <select id="function" class="swal2-input">
+                              <option value="ha">Huisarts</option>
+                              <option value="poh">POH</option>
+                              <option value="ass">Assistente</option>
+                          </select>
+                      </div>
+                      <div class="form-group-drop-down">
+                        <label for="rights">Rechten:</label>
+                          <select id="rights" class="swal2-input">
+                              <option value="user">Gebruiker</option>
+                              <option value="admin">Admin</option>
+                          </select>
+                      </div>
+                      <div class="form-group"><label for="email">Email:</label><input id="email" type="email" class="swal2-input" placeholder="E-mail"></div>`;
+/*
+                `
+                    <input id="name" class="swal2-input" placeholder="Naam"><br>
+                    <select id="organization" class="swal2-input">${organizationsOptions}</select>
+                    <input id="hap" type="hidden"><br><br>
+                    <select id="function" class="swal2-input">
+                        <option value="ha">Huisarts</option>
+                        <option value="poh">POH</option>
+                        <option value="ass">Assistente</option>
+                    </select><br><br>
+                    <select id="rights" class="swal2-input">
+                        <option value="user">Gebruiker</option>
+                        <option value="admin">Admin</option>
+                    </select><br><br>
+                    <input id="email" type="email" class="swal2-input" placeholder="E-mail">
+                `;
+                */
+
+                Swal.fire({
+                    title: 'Gebruiker toevoegen',
+                    html: htmlContent,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Toevoegen',
+                    confirmButtonColor: '#c89a0c',
+                    cancelButtonText: 'Annuleren',
+                    preConfirm: () => {
+                        const selectedOrg = document.getElementById('organization').selectedOptions[0];
+                        const userData = {
+                            name: document.getElementById('name').value,
+                            organization: selectedOrg.value, // ID of the organization
+                            email: document.getElementById('email').value,
+                            rights: document.getElementById('rights').value,
+                            job: document.getElementById('function').value,
+                            hap: selectedOrg.getAttribute('data-hap'), // HAP associated with the selected organization
+                        };
+                        return addUser(userData);
+                    }
+                });
+
+                // Function to handle organization selection changes
+                document.getElementById('organization').addEventListener('change', function() {
+                    const selectedOrg = this.selectedOptions[0];
+                    document.getElementById('hap').value = selectedOrg.getAttribute('data-hap');
+                });
+            });
+    }
+
+
+    function addUser(userData) {
+        return fetch('/api/users/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include this if you're using token-based authentication
+            },
+            body: JSON.stringify(userData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Convert the error response to JSON and handle it
+                return response.json().then(err => {
+                    if (err.message && err.message.includes('Please configure email settings')) {
+                        Swal.fire('Configuratie Vereist!', 'Configureer eerst de e-mailinstellingen in Instellingen.', 'warning');
+                    } else {
+                        Swal.fire('Fout!', 'Er ging iets mis bij het toevoegen van de gebruiker.', 'error');
+                    }
+                }).catch(() => {
+                    Swal.fire('Fout!', 'Er ging iets mis bij het verwerken van de fout.', 'error');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                Swal.fire('Toegevoegd!', 'De gebruiker is succesvol toegevoegd.', 'success');
+                loadUsers(); // Reload users to include the new one
+            }
+        })
+        .catch((error) => {
+            console.error('Error adding user:', error);
+            Swal.fire('Fout!', 'Er ging iets mis bij het toevoegen van de gebruiker.', 'error');
+        });
+    }
+
+
+    function loadSettings() {
+        const adminContent = document.getElementById('admin-content');
+        // Clear existing content in the admin-content container
+        adminContent.innerHTML = '';
+        // Create or select a specific container for settings buttons to control its positioning
+        let settingsContainer = document.getElementById('settings-container');
+        if (!settingsContainer) {
+            settingsContainer = document.createElement('div');
+            settingsContainer.id = 'settings-container';
+            document.body.appendChild(settingsContainer); // Append it directly to the body or another suitable container
+
+            // Style the container
+            settingsContainer.style.position = 'absolute'; // Use 'fixed' if you want it to stay in place during scroll
+            settingsContainer.style.top = '325px'; // Adjust distance from the top as needed
+            settingsContainer.style.display = 'flex';
+            settingsContainer.style.flexDirection = 'column';
+        }
+
+        // Retrieve user data from localStorage
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        // Check if the user is a super_admin
+        if (userData.rights === 'super-admin') {
+            settingsContainer.style.left = '100px'; // Closer to the left for super admins
+        } else {
+            settingsContainer.style.left = '450px'; // Standard position for other users
+        }
+
+        // Ensure the container is cleared before adding new buttons
+        settingsContainer.innerHTML = '';
+
+        const buttonsData = [
+            { id: 'email-send-btn', text: 'Emails versturen' },
+            { id: 'email-receive-btn', text: 'Emails ontvangen' },
+            { id: 'org-settings-btn', text: 'Organisaties' },
+            { id: 'function-settings-btn', text: 'Functies' },
+            { id: 'user-settings-btn', text: 'Gebruikers' }
+
+        ];
+
+        buttonsData.forEach(buttonData => {
+            const button = document.createElement('button');
+            button.id = buttonData.id;
+            button.textContent = buttonData.text;
+            button.classList.add('btn-admin-control-side'); // Assuming this class applies general button styles
+            button.style.marginBottom = '10px'; // Adds space between buttons
+            settingsContainer.appendChild(button);
+        });
+
+        document.body.appendChild(settingsContainer); // Append to body or another specific element
+
+        function highlightButton(sideButtonId, topButtonId) {
+            // Highlight top button
+            const topButtons = document.querySelectorAll('.btn-admin-control'); // Adjust selector as needed
+            topButtons.forEach(button => {
+                if (button.id === topButtonId) {
+                    button.classList.add('btn-admin-control-active'); // Add active class
+                } else {
+                    button.classList.remove('btn-admin-control-active'); // Remove active class from others
+                }
+            });
+
+            // Highlight side button
+            const sideButtons = document.querySelectorAll('.btn-admin-control-side'); // Adjust selector as needed
+            sideButtons.forEach(button => {
+                if (button.id === sideButtonId) {
+                    button.classList.add('btn-admin-control-side-active'); // Add active class
+                } else {
+                    button.classList.remove('btn-admin-control-side-active'); // Remove active class from others
+                }
+            });
+        }
+
+        // Modify existing event listeners to include highlighting logic
+        document.getElementById('email-send-btn').addEventListener('click', function() {
+            loadEmailSend(); // Your existing function to load content
+            highlightButton('email-send-btn', 'settings-btn'); // Highlight this button
+        });
+
+        document.getElementById('email-receive-btn').addEventListener('click', function() {
+            loadEmailReceive(); // Your existing function to load content
+            highlightButton('email-receive-btn', 'settings-btn'); // Highlight this button
+        });
+
+        document.getElementById('org-settings-btn').addEventListener('click', function() {
+            loadOrganizationSettings(); // Your existing function to load content
+            highlightButton('org-settings-btn', 'settings-btn'); // Highlight this button
+        });
+
+        document.getElementById('function-settings-btn').addEventListener('click', function() {
+            //loadFunctionSettings(); // Your existing function to load content
+            highlightButton('function-settings-btn', 'settings-btn'); // Highlight this button
+        });
+
+        document.getElementById('user-settings-btn').addEventListener('click', function() {
+            //loadUserSettings(); // Your existing function to load content
+            highlightButton('user-settings-btn', 'settings-btn'); // Highlight this button
+        });
+
+        // Initial load, if needed right away
+        document.getElementById('email-send-btn').click();
+        highlightButton('email-send-btn', 'settings-btn'); // Highlight this button
+    }
+
+    function loadEmailSend() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        console.log("User HAP ID:", userData.hap); // Check the HAP ID
+
+        const adminContent = document.getElementById('admin-content');
+        // Clear existing content in the admin-content container
+        adminContent.innerHTML = '';
+
+        fetch(`/api/email-settings/${userData.hap}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Received data:", data); // Log received data
+                const adminContent = document.getElementById('admin-content');
+                adminContent.innerHTML = `
+                    <div id="email-settings-form">
+                        <label class="settings-label"><span>Emailadres:</span><input type="email" id="email-address" value="${data.email_sending}"></label>
+                        <label class="settings-label"><span>SMTP server:</span><input type="text" id="smtp-server" value="${data.smtp}"></label>
+                        <label class="settings-label"><span>Port:</span><input type="number" id="port" value="${data.port}"></label>
+                        <label class="settings-label"><span>Paswoord:</span><input type="password" id="password" value="${data.password}"></label>
+                        <div><center><button id="save-email-settings">Opslaan</button></center></div>
+                    </div>
+                `;
+                document.getElementById('save-email-settings').addEventListener('click', saveEmailSettings);
+            });
+    }
+
+    function saveEmailSettings() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+
+        const emailAddress = document.getElementById('email-address').value;
+        const smtpServer = document.getElementById('smtp-server').value;
+        const port = document.getElementById('port').value;
+        const password = document.getElementById('password').value;
+
+        fetch(`/api/update-email-settings/${userData.hap}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailAddress, smtpServer, port, password })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to update email settings');
+            }
+            Swal.fire('Geslaagd!', 'Email instellingen zijn succesvol aangepast.', 'success');
+        })
+        .catch(error => {
+            console.error('Error updating email settings:', error);
+        });
+    }
+
+    function loadEmailReceive() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        console.log("User HAP ID:", userData.hap); // Check the HAP ID
+
+        const adminContent = document.getElementById('admin-content');
+        // Clear existing content in the admin-content container
+        adminContent.innerHTML = '';
+
+        fetch(`/api/email-receive-settings/${userData.hap}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Received data:", data); // Log received data
+                const adminContent = document.getElementById('admin-content');
+                adminContent.innerHTML = `
+                    <div id="email-settings-form">
+                        <label class="settings-label"><span>Emailadres:</span><input type="email" id="email-receive-address" value="${data.email_receiving}"></label>
+                        <div><center><button id="save-email-receive-settings">Opslaan</button></center></div>
+                    </div>
+                `;
+                document.getElementById('save-email-receive-settings').addEventListener('click', saveEmailReceiveSettings);
+            });
+    }
+
+    function saveEmailReceiveSettings() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+
+        const emailReceiveAddress = document.getElementById('email-receive-address').value;
+
+        fetch(`/api/update-email-receive-settings/${userData.hap}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailReceiveAddress })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to update email settings');
+            }
+            Swal.fire('Geslaagd!', 'Email instellingen zijn succesvol aangepast.', 'success');
+        })
+        .catch(error => {
+            console.error('Error updating email settings:', error);
+        });
+    }
+
+    function loadOrganizationSettings() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        console.log("User HAP ID:", userData.hap);
+
+        const adminContent = document.getElementById('admin-content');
+        // Clear existing content in the admin-content container
+        adminContent.innerHTML = '';
+
+        // Fetch list of organizations
+        fetch(`/api/org-list/${userData.hap}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Received data:", data);
+                adminContent.innerHTML = `
+                    <div id="org-settings-form">
+                        <label for="organization-select" class="form-label">Organisatie:</label>
+                        <select id="organization-select" class="form-control">
+                            <option>Selecteer een organisatie</option>
+                            ${data.organizations.map(org => `<option value="${org.id}">${org.organization}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div id="org-details">
+                        <!-- Organization details will be loaded here -->
+                    </div>
+                `;
+
+                // Add event listener to the select element
+                document.getElementById('organization-select').addEventListener('change', function() {
+                    loadOrganizationFunctions(this.value);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading organizations:', error);
+            });
+    }
+
+    function loadOrganizationFunctions(orgId) {
+        fetch(`/api/org-functions/${orgId}`)
+            .then(response => response.json())
+            .then(details => {
+                console.log("Organization Details:", details);
+                const detailsDiv = document.getElementById('org-details');
+                detailsDiv.innerHTML = `
+                    <div id="org-settings-form" class="form-group">
+                        <label for="function-select" class="form-label">Functies:</label>
+                        <div class="input-group">
+                            <select id="function-select" class="form-control">
+                                <option>Selecteer een functie</option>
+                                ${details.functions.map(func => `<option value="${func.id}">${func.name}</option>`).join('')}
+                            </select>
+                            <button id="add-function" class="btn btn-primary" type="button">+</button>
+                            <div><center><button id="save-org-settings">Opslaan</button></center></div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('add-function').addEventListener('click', function() {
+                    const userData = JSON.parse(localStorage.getItem('userData'));
+
+                    Swal.fire({
+                        title: 'Nieuwe Functie Toevoegen',
+                        html: `
+                            <input id="swal-input1" class="swal2-input" placeholder="Naam van de functie">
+                        `,
+                        focusConfirm: false,
+                        preConfirm: () => {
+                            const functionName = document.getElementById('swal-input1').value;
+                            if (!functionName) {
+                                Swal.showValidationMessage('De naam van de functie is vereist');
+                            }
+                            return { name: functionName };
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: 'Opslaan',
+                        cancelButtonText: 'Annuleren'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            addFunctionToDatabase(result.value.name, userData.hap, orgId);
+                        }
+                    });
+                });
+
+                document.getElementById('save-org-settings').addEventListener('click', saveOrganizationSettings);
+            })
+            .catch(error => {
+                console.error('Error loading organization details:', error);
+            });
+    }
+
+    function addFunctionToDatabase(functionName, hapId, orgId) {
+        // Example POST fetch request
+        fetch('/api/add-function', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Assuming you use token auth
+            },
+            body: JSON.stringify({
+                name: functionName,
+                hapId: hapId,
+                orgId: orgId
+            })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Succes!', 'Functie is toegevoegd.', 'success');
+            // Reload or update your function list, possibly refreshing the dropdown
+        })
+        .catch(error => {
+            console.error('Error adding function:', error);
+            Swal.fire('Fout!', 'Er ging iets mis bij het toevoegen van de functie.', 'error');
+        });
+    }
+
+
+    function saveOrganizationSettings() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+
+        const emailAddress = document.getElementById('email-address').value;
+        const smtpServer = document.getElementById('smtp-server').value;
+        const port = document.getElementById('port').value;
+        const password = document.getElementById('password').value;
+
+        fetch(`/api/update-email-settings/${userData.hap}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailAddress, smtpServer, port, password })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to update email settings');
+            }
+            Swal.fire('Geslaagd!', 'Email instellingen zijn succesvol aangepast.', 'success');
+        })
+        .catch(error => {
+            console.error('Error updating email settings:', error);
+        });
+    }
+
+    function updateLoginState() {
+        const loginBtn = document.getElementById('login-btn');
+        const loggedInMsg = document.getElementById('logged-in');
+        const superAdminBtn = document.getElementById('super-admin-btn'); // Get the super admin button
+        const adminBtn = document.getElementById('admin-btn'); // Get the super admin button
+
+        // Display login button or logged-in message based on isLoggedIn
+        loginBtn.style.display = isLoggedIn ? 'none' : 'block';
+        loggedInMsg.style.display = isLoggedIn ? 'block' : 'none';
+
+        // Detect if the user is on a mobile device. This regex covers most cases.
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // Additionally, check for super admin rights
+        if (isLoggedIn && !isMobile) {
+            const userData = JSON.parse(localStorage.getItem('userData'));
+
+            // Check if the userData exists and the user has super_admin rights
+            if (userData && userData.rights === 'super_admin') {
+                superAdminBtn.style.display = 'block'; // Show the Super Admin button
+                adminBtn.style.display = 'none'; // Hide if not super_admin
+            }
+            else if (userData && userData.rights === 'admin') {
+                adminBtn.style.display = 'block'; // Show the Super Admin button
+                superAdminBtn.style.display = 'none'; // Hide if not super_admin
+            }
+            else {
+                superAdminBtn.style.display = 'none'; // Hide if not super_admin
+                adminBtn.style.display = 'none'; // Hide if not super_admin
+            }
+        } else {
+            superAdminBtn.style.display = 'none'; // Ensure it's hidden if not logged in
+            adminBtn.style.display = 'none'; // Ensure it's hidden if not logged in
+        }
+    }
+
+    document.getElementById('admin-btn').addEventListener('click', function() {
+        // Clear current body content or hide it instead of clearing, based on your needs
+        document.body.innerHTML = ''; // This removes everything, consider hiding if necessary
+
+        // Create a container for the new layout that allows top alignment within the flex-centered body
+        const adminPanelContainer = document.createElement('div');
+        adminPanelContainer.style.minHeight = '100vh'; // Ensure it can expand to at least the full height of the viewport
+        adminPanelContainer.style.display = 'flex';
+        adminPanelContainer.style.flexDirection = 'column';
+        adminPanelContainer.style.alignItems = 'center';
+
+        // Create the admin panel content
+        const adminPanelContent = `
+            <h1 style="margin-top: 40;">MedPic</h1>
+            <h2>Administratie</h2>
+            <div class="admin-controls">
+                <button id="settings-btn" class="btn-admin-control">Instellingen</button>
+                <button id="organisaties-btn" class="btn-admin-control">Organisaties</button>
+                <button id="users-btn" class="btn-admin-control">Gebruikers</button>
+            </div>
+            <div id="admin-content"></div>
+        `;
+
+        adminPanelContainer.innerHTML = adminPanelContent;
+        document.body.appendChild(adminPanelContainer);
+
+        // Adjust admin-controls margin-top if necessary to position just below h1
+        //document.querySelector('.admin-controls').style.marginTop = '180px';
+
+        // Define a function to handle highlighting buttons
+        function highlightButton(activeButtonId) {
+            const buttons = document.querySelectorAll('.btn-admin-control');
+            buttons.forEach(button => {
+                if(button.id === activeButtonId) {
+                    button.classList.add('btn-admin-control-active'); // Highlight active button
+                } else {
+                    button.classList.remove('btn-admin-control-active'); // Remove highlight from other buttons
+                }
+            });
+        }
+
+        // Modify existing event listeners to include highlighting logic
+        document.getElementById('settings-btn').addEventListener('click', function() {
+            loadSettings(); // Your existing function to load content
+            highlightButton('settings-btn'); // Highlight this button
+        });
+
+        document.getElementById('organisaties-btn').addEventListener('click', function() {
+            loadOrganizations(); // Your existing function to load content
+            highlightButton('organisaties-btn'); // Highlight this button
+        });
+
+        document.getElementById('users-btn').addEventListener('click', function() {
+            loadUsers(); // Your existing function to load content
+            highlightButton('users-btn'); // Highlight this button
+        });
+
+        // Initial load, if needed right away
+        document.getElementById('organisaties-btn').click();
+    });
+
+    // Initialize the array to store imageData
+    let imagesData = [];
+
+    document.getElementById('camera-input').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const imageData = reader.result;
+                // Add the current image to the array
+                imagesData.push(imageData);
+
+                // Function to ask for more photos or send email
+                const askForMorePhotos = () => {
+                    if (imagesData.length < 4) {
+                        Swal.fire({
+                            title: 'Wil je nog een foto toevoegen?',
+                            text: "Maximaal 4 foto's",
+                            showCancelButton: true,
+                            confirmButtonText: 'Verzend foto',
+                            confirmButtonColor: '#c89a0c',
+                            cancelButtonText: '+',
+                            cancelButtonColor: '#c89a0c',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                sendEmail();
+                            } else {
+                                // Trigger the file input again
+                                document.getElementById('camera-input').value = ''; // Reset input
+                                document.getElementById('camera-input').click();
+                            }
+                        });
+                    } else {
+                        // Maximum reached, send email
+                        sendEmail();
+                    }
+                };
+
+                // Function to send email with the images
+                // Function to send email with the images
+                const sendEmail = () => {
+                    Swal.fire({
+                        title: 'Voer patiëntnummer in',
+                        input: 'text',
+                        inputLabel: 'Patiëntnummer',
+                        showCancelButton: true,
+                        cancelButtonText: 'Annuleer',
+                        cancelButtonColor: '#8b0000',
+                        confirmButtonText: 'Verstuur',
+                        confirmButtonColor: '#c89a0c',
+                        preConfirm: (patientNumber) => {
+                            if (!patientNumber) {
+                                Swal.showValidationMessage('Patiëntnummer is verplicht');
+                                return false;
+                            }
+                            return patientNumber;
+                        },
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const patientNumber = result.value;
+                            const userData = JSON.parse(localStorage.getItem('userData'));
+
+                            // Construct the email content with user data and all images
+                            const emailContent = {
+                                patientNumber: patientNumber,
+                                imagesData: imagesData, // Send all images
+                                name: userData.name,
+                                organization: userData.organization,
+                                username: userData.username,
+                            };
+
+                            // Show loading before sending email
+                            Swal.fire({
+                                title: 'Verzenden...',
+                                text: 'Even geduld aub, de e-mail wordt verstuurd.',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading(); // Show loading animation
+                                }
+                            });
+
+                            fetch('/send-email', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+                                },
+                                body: JSON.stringify(emailContent)
+                            })
+                            .then(response => {
+                                Swal.close(); // Close the loading Swal when fetch completes
+                                if (response.ok) {
+                                    Swal.fire({
+                                        title: 'Gelukt!',
+                                        text: "Alle foto's veilig verstuurd",
+                                        icon: 'success',
+                                        iconColor: '#c89a0c',
+                                        confirmButtonText: 'Ok',
+                                        confirmButtonColor: '#c89a0c',
+                                    });
+                                } else {
+                                    Swal.fire('Error!', 'Email sending failed.', 'error');
+                                }
+                                imagesData = []; // Reset images data for the next use
+                            })
+                            .catch((error) => {
+                                Swal.close(); // Ensure loading modal is closed on error
+                                Swal.fire('Error!', 'Email sending failed: ' + error.message, 'error');
+                            });
+                        }
+                    });
+                };
+
+                askForMorePhotos();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Update UI based on login state
+    document.addEventListener('DOMContentLoaded', updateLoginState);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.body.addEventListener('click', function(event) {
+            if (event.target.tagName === 'H1') {
+                window.location.reload();
+            }
+        });
+    });
+</script>
+</body>
+</html>

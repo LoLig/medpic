@@ -1,0 +1,25 @@
+{
+  "name": "medpic",
+  "version": "1.0.0",
+  "description": "A web app for capturing and sending medical pictures securely.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "medical",
+    "pictures",
+    "secured"
+  ],
+  "author": "Merman",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemailer": "^6.4.11",
+    "body-parser": "^1.19.0",
+    "sweetalert2": "^9.10.12",
+    "mysql2": "^2.3.0",
+    "jsonwebtoken": "^8.5.1",
+    "bcrypt": "^5.0.1"
+  }
+}
