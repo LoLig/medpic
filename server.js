@@ -45,21 +45,23 @@ const pool = mysql.createPool({
 const proxyUrl = process.env.QUOTAGUARDSTATIC_URL;
 const proxyAgent = new HttpProxyAgent(proxyUrl);
 
-// Create a MySQL pool with an HTTP proxy agent
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306, // Default MySQL port is 3306
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    ssl: {
-        rejectUnauthorized: false,
-    },
-    stream: proxyAgent // Use the proxy agent
-});
+// Create a MySQL connection using the proxy
+async function createConnection() {
+    const connection = await mysql.createConnection({
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT || 3306, // Default MySQL port is 3306
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        ssl: {
+            rejectUnauthorized: false,
+        },
+        connectTimeout: 10000,
+        // This is where we set the proxy agent
+        stream: proxyAgent,
+    });
+    return connection;
+}
 
 async function testDatabaseConnection() {
     try {
