@@ -2,6 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
+const quotaguard = require('quotaguardstatic');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -40,9 +41,6 @@ const pool = mysql.createPool({
 });
 */
 
-// Parse the Quotaguard Static URL
-const quotaguardStaticUrl = new URL(process.env.QUOTAGUARDSTATIC_URL);
-
 // Create a MySQL pool
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -54,13 +52,9 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0,
     // Add Quotaguard Static proxy settings
-    stream: require('quotaguardstatic').tunnel({
-        host: quotaguardStaticUrl.hostname,
-        port: quotaguardStaticUrl.port,
-        proxyAuth: {
-            username: quotaguardStaticUrl.username,
-            password: quotaguardStaticUrl.password
-        }
+    stream: quotaguard.createTunnel({
+        tunnelHost: process.env.QUOTAGUARDSTATIC_URL.split('@')[1],
+        proxyAuth: process.env.QUOTAGUARDSTATIC_URL.split('@')[0].replace('http://', '').replace('https://', '')
     })
 });
 
