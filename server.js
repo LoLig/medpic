@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
-const { HttpsProxyAgent } = require('https-proxy-agent');
+const tunnel = require('tunnel');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -41,6 +41,16 @@ const pool = mysql.createPool({
 });
 */
 
+// Create a tunnel agent
+const proxyUrl = new URL(process.env.QUOTAGUARDSTATIC_URL);
+const tunnelAgent = tunnel.httpsOverHttp({
+  proxy: {
+    host: proxyUrl.hostname,
+    port: proxyUrl.port,
+    proxyAuth: `${proxyUrl.username}:${proxyUrl.password}`
+  }
+});
+
 // Create a MySQL pool
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -54,7 +64,7 @@ const pool = mysql.createPool({
     ssl: {
         rejectUnauthorized: false,
     },
-    stream: new HttpsProxyAgent(process.env.QUOTAGUARDSTATIC_URL)
+    stream: tunnelAgent
 });
 
 
