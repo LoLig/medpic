@@ -17,6 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 2001;
 const HOST = process.env.HOST || '0.0.0.0'; // Default to listen on all network interfaces
 
+/*
 // Create a MySQL pool
 const pool = mysql.createPool({
     host: 'web0098.zxcs.nl',
@@ -37,8 +38,8 @@ const pool = mysql.createPool({
         }
     })
 });
+*/
 
-/*
 // Create a MySQL pool
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -48,9 +49,18 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    // Add Quotaguard Static proxy settings
+    stream: require('quotaguardstatic').tunnel({
+        host: quotaguardStaticUrl.hostname,
+        port: quotaguardStaticUrl.port,
+        proxyAuth: {
+            username: quotaguardStaticUrl.username,
+            password: quotaguardStaticUrl.password
+        }
+    })
 });
-*/
+
 
 async function testDatabaseConnection() {
     try {
