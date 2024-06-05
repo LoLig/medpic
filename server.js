@@ -40,6 +40,9 @@ const pool = mysql.createPool({
 });
 */
 
+// Parse the Quotaguard Static URL
+const quotaguardStaticUrl = new URL(process.env.QUOTAGUARDSTATIC_URL);
+
 // Create a MySQL pool
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
