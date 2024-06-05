@@ -65,13 +65,16 @@ async function createConnection() {
 
 async function testDatabaseConnection() {
     try {
-        const [rows] = await pool.query('SELECT 1 + 1 AS solution');
+        const connection = await createConnection();
+        const [rows] = await connection.execute('SELECT 1 + 1 AS solution');
         console.log('Database connection test successful: ', rows[0].solution);
+        await connection.end();
     } catch (err) {
         console.error('Database connection test failed:', err);
         process.exit(1);
     }
 }
+
 
 testDatabaseConnection();
 
