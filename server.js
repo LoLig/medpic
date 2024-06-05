@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
-const HttpProxyAgent = require('http-proxy-agent');
+const { Agent } = require('http-proxy-agent');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -43,12 +43,12 @@ const pool = mysql.createPool({
 
 // Create an HTTP proxy agent
 const proxyUrl = process.env.QUOTAGUARDSTATIC_URL;
-const agent = new HttpProxyAgent(proxyUrl);
+const proxyAgent = new Agent(proxyUrl);
 
-// Create a MySQL pool
+// Create a MySQL pool with an HTTP proxy agent
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    port: process.env.DB_PORT || 3306, // Default MySQL port is 3306
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
@@ -58,9 +58,20 @@ const pool = mysql.createPool({
     ssl: {
         rejectUnauthorized: false,
     },
-    stream: agent
+    // Custom stream function to create a connection using the proxy
+    connect: (cb) => {
+        const connection = mysql.createConnection({
+            host: process.env.DB_HOST,
+            port: process.env.DB_PORT || 3306,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+            stream: proxyAgent
+        });
+        connection.connect(cb);
+        return connection;
+    }
 });
-
 
 async function testDatabaseConnection() {
     try {
