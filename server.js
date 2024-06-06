@@ -74,7 +74,7 @@ async function testDatabaseConnection() {
 */
 
 
-testDatabaseConnection();
+//testDatabaseConnection();
 
 // Ensure the key is 32 bytes for AES-256
 const secretKey2 = Buffer.from(process.env.SECRET_KEY_2 || 'default_secret_key').slice(0, 32);
