@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
-const HttpProxyAgent = require('http-proxy-agent');
+const SocksConnection = require('socksjs');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -41,28 +41,41 @@ const pool = mysql.createPool({
 });
 */
 
-// Create an HTTP proxy agent
-const proxyUrl = process.env.QUOTAGUARDSTATIC_URL;
-const proxyAgent = new HttpProxyAgent(proxyUrl);
+// Setup QuotaGuard Static Proxy
+const proxy = url.parse(process.env.QUOTAGUARDSTATIC_URL);
+const auth = proxy.auth;
+const username = auth.split(":")[0];
+const pass = auth.split(":")[1];
 
-// Create a MySQL connection using the proxy
-async function createConnection() {
-    const connection = await mysql.createConnection({
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT || 3306, // Default MySQL port is 3306
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        ssl: {
-            rejectUnauthorized: false,
-        },
-        connectTimeout: 10000,
-        // This is where we set the proxy agent
-        stream: proxyAgent,
-    });
-    return connection;
-}
+const remote_options = {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 3306
+};
 
+const sock_options = {
+  host: proxy.hostname,
+  port: 1080,
+  user: username,
+  pass: pass
+};
+
+const sockConn = new SocksConnection(remote_options, sock_options);
+
+const dbConnection = mysql.createConnection({
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  stream: sockConn
+});
+
+dbConnection.query('SELECT 1 + 1 AS solution', function (err, rows, fields) {
+  if (err) throw err;
+  console.log('Database connection test successful: ', rows[0].solution);
+  sockConn.dispose();
+  dbConnection.end();
+});
+
+/*
 async function testDatabaseConnection() {
     try {
         const connection = await createConnection();
@@ -74,6 +87,7 @@ async function testDatabaseConnection() {
         process.exit(1);
     }
 }
+*/
 
 
 testDatabaseConnection();

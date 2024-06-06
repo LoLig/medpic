@@ -21,6 +21,6 @@
     "mysql2": "^3.10.0",
     "jsonwebtoken": "^8.5.1",
     "bcrypt": "^5.0.1",
-    "http-proxy-agent": "^5.0.0"
+    "sockjs": "^0.3.24"
   }
 }
