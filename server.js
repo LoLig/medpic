@@ -47,7 +47,7 @@ const proxyUrl = process.env.QUOTAGUARDSTATIC_URL;
 const proxyOptions = url.parse(proxyUrl);
 
 // Create the proxy agent
-const proxyAgent = new SocksProxyAgent(proxyOptions);
+const proxyAgent = new SocksProxyAgent(proxyOptions.href);
 
 async function createConnection() {
     const connection = await mysql.createConnection({
