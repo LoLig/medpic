@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const url = require('url');
-const { SocksClient } = require('socks5-client');
+const SocksClient = require('socks5-client');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -50,7 +50,7 @@ const [proxyUsername, proxyPassword] = proxyOptions.auth.split(':');
 // Create a MySQL connection using the proxy
 function createConnection() {
     return new Promise((resolve, reject) => {
-        const client = new  { SocksClient } ({
+        const client = new SocksClient({
             socksHost: proxyOptions.hostname,
             socksPort: proxyOptions.port,
             socksUsername: proxyUsername,
