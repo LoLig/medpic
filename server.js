@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
-const SocksConnection = require('sockjs');
+const SocksProxyAgent = require('socks-proxy-agent');
 const url = require('url');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
@@ -48,31 +48,26 @@ const auth = proxy.auth;
 const username = auth.split(":")[0];
 const pass = auth.split(":")[1];
 
-const remote_options = {
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 3306
-};
-
-const sock_options = {
-  host: proxy.hostname,
-  port: 1080,
-  user: username,
-  pass: pass
-};
-
-const sockConn = new SocksConnection(remote_options, sock_options);
+// Create the proxy agent
+const proxyAgent = new SocksProxyAgent({
+  hostname: proxy.hostname,
+  port: parseInt(proxy.port),
+  userId: username,
+  password: pass
+});
 
 const dbConnection = mysql.createConnection({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  stream: sockConn
+  stream: proxyAgent
 });
 
 dbConnection.query('SELECT 1 + 1 AS solution', function (err, rows, fields) {
   if (err) throw err;
   console.log('Database connection test successful: ', rows[0].solution);
-  sockConn.dispose();
   dbConnection.end();
 });
 
