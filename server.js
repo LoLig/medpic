@@ -2,8 +2,6 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
-const SocksProxyAgent = require('socks-proxy-agent');
-const url = require('url');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -42,34 +40,24 @@ const pool = mysql.createPool({
 });
 */
 
-// Setup QuotaGuard Static Proxy
-const proxy = url.parse(process.env.QUOTAGUARDSTATIC_URL);
-const auth = proxy.auth;
-const username = auth.split(":")[0];
-const pass = auth.split(":")[1];
-
-// Create the proxy agent
-const proxyAgent = new SocksProxyAgent({
-  hostname: proxy.hostname,
-  port: parseInt(proxy.port),
-  userId: username,
-  password: pass
-});
-
-const dbConnection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  stream: proxyAgent
-});
-
-dbConnection.query('SELECT 1 + 1 AS solution', function (err, rows, fields) {
-  if (err) throw err;
-  console.log('Database connection test successful: ', rows[0].solution);
-  dbConnection.end();
-});
+const pool = mysql.createPool({
+    connectionLimit: 10,
+    host: process.env.JAWSDB_URL.split('@')[1].split('/')[0].split(':')[0],
+    port: process.env.JAWSDB_URL.split('@')[1].split('/')[0].split(':')[1],
+    user: process.env.JAWSDB_URL.split('@')[0].replace('mysql://', '').split(':')[0],
+    password: process.env.JAWSDB_URL.split('@')[0].replace('mysql://', '').split(':')[1],
+    database: process.env.JAWSDB_URL.split('@')[1].split('/')[1].split('?')[0]
+  });
+  
+  // Test the connection
+  pool.getConnection()
+    .then(connection => {
+      console.log('Connected to the database.');
+      connection.release();
+    })
+    .catch(err => {
+      console.error('Error connecting to the database:', err);
+    });
 
 /*
 async function testDatabaseConnection() {
