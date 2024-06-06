@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const url = require('url');
-const { SocksProxyAgent } = require('socks-proxy-agent');
+const { SocksClient } = require('socks5-client');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -45,27 +45,45 @@ const pool = mysql.createPool({
 // Setup QuotaGuard Static Proxy
 const proxyUrl = process.env.QUOTAGUARDSTATIC_URL;
 const proxyOptions = url.parse(proxyUrl);
+const [proxyUsername, proxyPassword] = proxyOptions.auth.split(':');
 
-// Create the proxy agent
-const proxyAgent = new SocksProxyAgent(proxyOptions.href);
+// Create a MySQL connection using the proxy
+function createConnection() {
+    return new Promise((resolve, reject) => {
+        const client = new SocksClient({
+            socksHost: proxyOptions.hostname,
+            socksPort: proxyOptions.port,
+            socksUsername: proxyUsername,
+            socksPassword: proxyPassword,
+            targetHost: process.env.DB_HOST,
+            targetPort: process.env.DB_PORT || 3306
+        });
 
-async function createConnection() {
-    const connection = await mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        stream: proxyAgent
+        client.connect((err, stream) => {
+            if (err) {
+                return reject(err);
+            }
+
+            const connection = mysql.createConnection({
+                user: process.env.DB_USER,
+                password: process.env.DB_PASSWORD,
+                database: process.env.DB_NAME,
+                stream: stream
+            });
+
+            resolve(connection);
+        });
     });
-    return connection;
 }
 
 async function testDatabaseConnection() {
     try {
         const connection = await createConnection();
-        const [rows] = await connection.execute('SELECT 1 + 1 AS solution');
-        console.log('Database connection test successful: ', rows[0].solution);
-        await connection.end();
+        connection.query('SELECT 1 + 1 AS solution', (err, rows) => {
+            if (err) throw err;
+            console.log('Database connection test successful: ', rows[0].solution);
+            connection.end();
+        });
     } catch (err) {
         console.error('Database connection test failed:', err);
         process.exit(1);
