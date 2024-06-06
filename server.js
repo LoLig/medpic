@@ -50,7 +50,7 @@ const [proxyUsername, proxyPassword] = proxyOptions.auth.split(':');
 // Create a MySQL connection using the proxy
 function createConnection() {
     return new Promise((resolve, reject) => {
-        const client = new SocksClient({
+        const client = new  { SocksClient } ({
             socksHost: proxyOptions.hostname,
             socksPort: proxyOptions.port,
             socksUsername: proxyUsername,
