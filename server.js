@@ -2,6 +2,8 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
+const url = require('url');
+const SocksProxyAgent = require('socks-proxy-agent');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -40,24 +42,37 @@ const pool = mysql.createPool({
 });
 */
 
-const pool = mysql.createPool({
-    connectionLimit: 10,
-    host: process.env.JAWSDB_URL.split('@')[1].split('/')[0].split(':')[0],
-    port: process.env.JAWSDB_URL.split('@')[1].split('/')[0].split(':')[1],
-    user: process.env.JAWSDB_URL.split('@')[0].replace('mysql://', '').split(':')[0],
-    password: process.env.JAWSDB_URL.split('@')[0].replace('mysql://', '').split(':')[1],
-    database: process.env.JAWSDB_URL.split('@')[1].split('/')[1].split('?')[0]
-  });
-  
-  // Test the connection
-  pool.getConnection()
-    .then(connection => {
-      console.log('Connected to the database.');
-      connection.release();
-    })
-    .catch(err => {
-      console.error('Error connecting to the database:', err);
+// Setup QuotaGuard Static Proxy
+const proxyUrl = process.env.QUOTAGUARDSTATIC_URL;
+const proxyOptions = url.parse(proxyUrl);
+
+// Create the proxy agent
+const proxyAgent = new SocksProxyAgent(proxyOptions);
+
+async function createConnection() {
+    const connection = await mysql.createConnection({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        stream: proxyAgent
     });
+    return connection;
+}
+
+async function testDatabaseConnection() {
+    try {
+        const connection = await createConnection();
+        const [rows] = await connection.execute('SELECT 1 + 1 AS solution');
+        console.log('Database connection test successful: ', rows[0].solution);
+        await connection.end();
+    } catch (err) {
+        console.error('Database connection test failed:', err);
+        process.exit(1);
+    }
+}
+
+testDatabaseConnection();
 
 /*
 async function testDatabaseConnection() {
