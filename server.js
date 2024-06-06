@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
-const { Client } = require('ssh2');
+const tunnel = require('tunnel-ssh');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -41,60 +41,46 @@ const pool = mysql.createPool({
 });
 */
 
-// Set environment variables for SSH
-const sshConfig = {
-host: process.env.DB_HOST,
-port: process.env.SSH_PORT || 22,
-username: process.env.DB_USER,
-password: process.env.DB_PASSWORD,
-};
-
-const dbConfig = {
-host: process.env.DB_HOST,
-user: process.env.DB_USER,
-password: process.env.DB_PASSWORD,
-database: process.env.DB_NAME,
-port: process.env.DB_PORT || 3306,
-};
-
-async function createSSHConnection() {
-return new Promise((resolve, reject) => {
-    const ssh = new Client();
-    ssh.on('ready', () => {
-    ssh.forwardOut(
-        '127.0.0.1',
-        3306,
-        dbConfig.host,
-        dbConfig.port,
-        (err, stream) => {
-        if (err) {
-            ssh.end();
-            return reject(err);
-        }
-        const connection = mysql.createConnection({
-            ...dbConfig,
-            stream,
-        });
-        resolve(connection);
-        }
-    );
-    }).connect(sshConfig);
-});
-}
-
-async function testDatabaseConnection() {
-try {
-    const connection = await createSSHConnection();
-    const [rows] = await connection.execute('SELECT 1 + 1 AS solution');
-    console.log('Database connection test successful: ', rows[0].solution);
-    await connection.end();
-} catch (err) {
-    console.error('Database connection test failed:', err);
-    process.exit(1);
-}
-}
-
-testDatabaseConnection();
+// SSH and DB configuration
+const config = {
+    username: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    host: process.env.DB_HOST,
+    port: process.env.SSH_PORT || 22,
+    dstHost: process.env.DB_HOST,
+    dstPort: process.env.DB_PORT || 3306,
+    localHost: '127.0.0.1',
+    localPort: 3306,
+  };
+  
+  const dbConfig = {
+    host: '127.0.0.1',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: 3306,
+  };
+  
+  async function testDatabaseConnection() {
+    try {
+      const connection = await mysql.createConnection(dbConfig);
+      const [rows] = await connection.execute('SELECT 1 + 1 AS solution');
+      console.log('Database connection test successful: ', rows[0].solution);
+      await connection.end();
+    } catch (err) {
+      console.error('Database connection test failed:', err);
+      process.exit(1);
+    }
+  }
+  
+  tunnel(config, function (error, server) {
+    if (error) {
+      console.error('SSH connection error:', error);
+      process.exit(1);
+    }
+    console.log('SSH Tunnel established');
+    testDatabaseConnection();
+  });
 
 /*
 async function testDatabaseConnection() {
