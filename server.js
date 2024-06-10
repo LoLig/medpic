@@ -18,71 +18,18 @@ const app = express();
 const PORT = process.env.PORT || 2001;
 const HOST = process.env.HOST || '0.0.0.0'; // Default to listen on all network interfaces
 
-/*
 // Create a MySQL pool
 const pool = mysql.createPool({
-    host: 'web0098.zxcs.nl',
-    port: '2222',
-    user: 'u72967p69489_medpic',
-    password: '7puy#sd58josPZyY',
-    database: 'u72967p69489_medpicdb',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    // Add Quotaguard Static proxy settings
-    stream: require('quotaguardstatic').tunnel({
-        host: quotaguardStaticUrl.hostname,
-        port: quotaguardStaticUrl.port,
-        proxyAuth: {
-            username: quotaguardStaticUrl.username,
-            password: quotaguardStaticUrl.password
-        }
-    })
-});
-*/
-
-// SSH and DB configuration
-const config = {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
     host: process.env.DB_HOST,
-    port: process.env.SSH_PORT || 22,
-    dstHost: process.env.DB_HOST,
-    dstPort: process.env.DB_PORT || 3306,
-    localHost: '127.0.0.1',
-    localPort: 3306,
-  };
-  
-  const dbConfig = {
-    host: '127.0.0.1',
+    port: process.env.DB_PORT,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: 3306,
-  };
-  
-  async function testDatabaseConnection() {
-    try {
-      const connection = await mysql.createConnection(dbConfig);
-      const [rows] = await connection.execute('SELECT 1 + 1 AS solution');
-      console.log('Database connection test successful: ', rows[0].solution);
-      await connection.end();
-    } catch (err) {
-      console.error('Database connection test failed:', err);
-      process.exit(1);
-    }
-  }
-  
-  tunnel(config, function (error, server) {
-    if (error) {
-      console.error('SSH connection error:', error);
-      process.exit(1);
-    }
-    console.log('SSH Tunnel established');
-    testDatabaseConnection();
-  });
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
 
-/*
 async function testDatabaseConnection() {
     try {
         const connection = await createConnection();
@@ -94,10 +41,9 @@ async function testDatabaseConnection() {
         process.exit(1);
     }
 }
-*/
 
 
-//testDatabaseConnection();
+testDatabaseConnection();
 
 // Ensure the key is 32 bytes for AES-256
 const secretKey2 = Buffer.from(process.env.SECRET_KEY_2 || 'default_secret_key').slice(0, 32);
