@@ -14,24 +14,21 @@ const secretKey = crypto.randomBytes(32).toString('hex');
 const jwtSecret = secretKey;
 
 const app = express();
-const PORT = process.env.PORT || 2001;
-const HOST = process.env.HOST || '0.0.0.0'; // Default to listen on all network interfaces
-
-// Create a MySQL pool
-const pool = mysql.createPool({
+const PORT = process.env.PORT || 3000;
+const dbConfig = {
     host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+    port: process.env.DB_PORT || 3306,
+    ssl: {
+        rejectUnauthorized: false,
+    }
+};
 
 async function testDatabaseConnection() {
     try {
-        const connection = await createConnection();
+        const connection = await mysql.createConnection(dbConfig);
         const [rows] = await connection.execute('SELECT 1 + 1 AS solution');
         console.log('Database connection test successful: ', rows[0].solution);
         await connection.end();
