@@ -15,6 +15,7 @@ const jwtSecret = secretKey;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 const dbConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -25,6 +26,9 @@ const dbConfig = {
         rejectUnauthorized: false,
     }
 };
+
+// Create a pool of connections
+const pool = mysql.createPool(dbConfig);
 
 async function testDatabaseConnection() {
     try {
