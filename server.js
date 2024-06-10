@@ -2,7 +2,6 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
-const tunnel = require('tunnel-ssh');
 const Swal = require('sweetalert2');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -41,7 +40,6 @@ async function testDatabaseConnection() {
         process.exit(1);
     }
 }
-
 
 testDatabaseConnection();
 
