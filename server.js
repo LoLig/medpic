@@ -449,6 +449,10 @@ app.post('/api/users/add', async (req, res) => {
         const [orgResults] = await pool.execute('SELECT organization FROM organizations WHERE id = ?', [organization]);
         const orgName = orgResults.length > 0 ? orgResults[0].organization : 'Unknown Organization';
 
+        // Check HAP settings before adding the user
+        const [hapResults] = await pool.execute('SELECT hap FROM hap WHERE id = ?', [hap]);
+        const hapData = hapResults[0];
+
         // Add user to database
         const hashedPassword = await bcrypt.hash(defaultPassword, saltRounds);
         const userSql = 'INSERT INTO users (name, organization, username, rights, `function`, hap, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
