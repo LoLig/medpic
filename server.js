@@ -161,13 +161,14 @@ app.post('/api/users/request-password-reset', async (req, res) => {
         const mailOptions = {
             from: `"MedPic" <${process.env.PROTONMAIL_USER}>`,
             to: email,
-            subject: 'Password Reset',
+            subject: 'Wachtwoord Reset',
             html: `
                 <html>
                 <head>
                     <title>Wachtwoord Reset</title>
                 </head>
                 <body>
+                    <p>Beste gebruiker,</p>
                     <p>U ontvangt dit bericht omdat u (of iemand anders) een verzoek heeft ingediend om het wachtwoord voor uw account opnieuw in te stellen.</p>
                     <p>Klik op de volgende link of kopieer deze naar uw browser om het proces te voltooien:</p>
                     <p><a href="http://${req.headers.host}/reset-password.html?token=${resetPasswordToken}" style="color: #1a73e8;">Wachtwoord opnieuw instellen</a></p>
@@ -465,6 +466,57 @@ app.post('/api/users/add', async (req, res) => {
         const [orgResults] = await pool.execute('SELECT organization FROM organizations WHERE id = ?', [organization]);
         const orgName = orgResults.length > 0 ? orgResults[0].organization : 'Unknown Organization';
 
+        // Add user to database
+        const hashedPassword = await bcrypt.hash(defaultPassword, saltRounds);
+        const userSql = 'INSERT INTO users (name, organization, username, rights, `function`, hap, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        await pool.execute(userSql, [name, organization, email, rights, job, hap, hashedPassword]);
+
+        // Email options
+        const mailOptions = {
+            from: `"MedPic" <${process.env.PROTONMAIL_USER}>`,
+            to: email,
+            subject: 'Toegevoegd als gebruiker van MedPic',
+            html: `
+                <html>
+                <head>
+                    <title>Welkom bij MedPic</title>
+                </head>
+                <body>
+                    <p>Beste ${name},</p>
+                    <p>Je bent toegevoegd aan <strong>MedPic</strong>.</p>
+                    <p>Met MedPic kun je veilig, direct en snel medische foto's versturen naar ${hapData.hap} namens ${orgName}. Direct met je eigen mobiele camera zodat we goede kwaliteit foto's krijgen. De foto's worden ook niet op je eigen telefoon bewaard.</p>
+                    <p>Ga naar: <a href="https://medpic.manfluit.nl" style="color: #1a73e8;">MedPic</a></p>
+                    <p>Log de eerste keer in met je emailadres en als paswoord <strong>medpic</strong>. Het wachtwoord dien je dan meteen aan te passen.</p>
+                    <p>Succes en met vriendelijke groeten,</p>
+                    <p>Ernst Fluitman<br>Huisarts en bedenker van MedPic</p>
+                </body>
+                </html>
+            `            
+        };
+
+        // Send the email
+        await transporter.sendMail(mailOptions);
+
+        // Respond with success message
+        res.json({ message: 'User added and email sent successfully.' });
+    } catch (error) {
+        console.error('Error in user addition or email sending:', error);
+        res.status(500).json({ message: 'Error processing your request', details: error.message });
+    }
+});
+
+
+/*
+// Endpoint to add a user
+app.post('/api/users/add', async (req, res) => {
+    const { name, organization, email, rights, job, hap } = req.body;
+    const defaultPassword = "medpic"; // Standard password for all new users
+
+    try {
+        // Fetch organization name
+        const [orgResults] = await pool.execute('SELECT organization FROM organizations WHERE id = ?', [organization]);
+        const orgName = orgResults.length > 0 ? orgResults[0].organization : 'Unknown Organization';
+
         // Check HAP settings before adding the user
         const [hapResults] = await pool.execute('SELECT hap, smtp, port, email_sending, password_iv, password_encrypted FROM hap WHERE id = ?', [hap]);
         if (hapResults.length > 0 && hapResults[0].password_iv) {
@@ -475,22 +527,6 @@ app.post('/api/users/add', async (req, res) => {
                 iv: hapData.password_iv,
                 encryptedData: hapData.password_encrypted
             });
-
-            /*
-            // Email transporter setup
-            const transporter = nodemailer.createTransport({
-                host: hapData.smtp,
-                port: hapData.port,
-                secure: false,
-                auth: {
-                    user: hapData.email_sending,
-                    pass: pw_decrypted
-                },
-                tls: {
-                    rejectUnauthorized: false
-                }
-            });
-            */
 
             // Email options
             const mailOptions = {
@@ -537,6 +573,7 @@ app.post('/api/users/add', async (req, res) => {
         res.status(500).json({ message: 'Error processing your request', details: error.message });
     }
 });
+*/
 
 /*
 app.post('/api/users/add', async (req, res) => {
