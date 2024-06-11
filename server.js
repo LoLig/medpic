@@ -198,6 +198,17 @@ app.post('/send-email', async (req, res) => {
         }
         const orgData = orgResults[0];
 
+        const [hapResults] = await pool.execute('SELECT email_receiving FROM hap WHERE id = ?', [orgData.hap]);
+        if (hapResults.length === 0) {
+            return res.status(404).send({ message: 'HAP settings not found for the given organization.' });
+        }
+        const hapData = hapResults[0];
+
+        const pw_decrypted = decrypt({
+            iv: hapData.password_iv,
+            encryptedData: hapData.password_encrypted
+        });
+
         const attachments = imagesData.map((image, index) => ({
             filename: `image${index + 1}.jpg`,
             content: image.split('base64,')[1],
