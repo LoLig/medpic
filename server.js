@@ -204,11 +204,6 @@ app.post('/send-email', async (req, res) => {
         }
         const hapData = hapResults[0];
 
-        const pw_decrypted = decrypt({
-            iv: hapData.password_iv,
-            encryptedData: hapData.password_encrypted
-        });
-
         const attachments = imagesData.map((image, index) => ({
             filename: `image${index + 1}.jpg`,
             content: image.split('base64,')[1],
