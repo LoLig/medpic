@@ -69,6 +69,20 @@ function decrypt(text) {
     }
 }
 
+const transporter = nodemailer.createTransport({
+    host: 'smtp.protonmail.ch',
+    port: 587,
+    secure: false, // STARTTLS
+    auth: {
+        //type: 'login',
+        user: process.env.PROTONMAIL_USER,
+        pass: process.env.PROTONMAIL_PASS
+    },
+    tls: {
+        ciphers: 'SSLv3' // Optional: use this if you encounter TLS handshake issues
+    }
+});
+
 // Increase request size limit (for JSON payloads)
 app.use(bodyParser.json({ limit: '50mb' }));
 
@@ -134,6 +148,7 @@ app.post('/api/users/request-password-reset', async (req, res) => {
             return res.status(404).send('No account with that email address exists.');
         }
 
+        /*
         const transporter = nodemailer.createTransport({
           service: "hotmail",
           auth: {
@@ -141,16 +156,24 @@ app.post('/api/users/request-password-reset', async (req, res) => {
               pass: "009510.Piet!"
           }
         });
+        */
 
         const mailOptions = {
-            from: `MedPic <efluitman@hotmail.com>`,
+            from: `"MedPic" <${process.env.PROTONMAIL_USER}>`,
             to: email,
             subject: 'Password Reset',
             html: `
-                U ontvangt dit bericht omdat u (of iemand anders) een verzoek heeft ingediend om het wachtwoord voor uw account opnieuw in te stellen.<br><br>
-                Klik op de volgende link of kopieer deze naar uw browser om het proces te voltooien:<br><br>
-                <a href="http://${req.headers.host}/reset-password.html?token=${resetPasswordToken}">Wachtwoord opnieuw instellen</a><br><br>
-                Als u dit niet heeft aangevraagd, negeer dan deze e-mail en uw wachtwoord zal niet worden gewijzigd.
+                <html>
+                <head>
+                    <title>Wachtwoord Reset</title>
+                </head>
+                <body>
+                    <p>U ontvangt dit bericht omdat u (of iemand anders) een verzoek heeft ingediend om het wachtwoord voor uw account opnieuw in te stellen.</p>
+                    <p>Klik op de volgende link of kopieer deze naar uw browser om het proces te voltooien:</p>
+                    <p><a href="http://${req.headers.host}/reset-password.html?token=${resetPasswordToken}" style="color: #1a73e8;">Wachtwoord opnieuw instellen</a></p>
+                    <p>Als u dit niet heeft aangevraagd, negeer dan deze e-mail en uw wachtwoord zal niet worden gewijzigd.</p>
+                </body>
+                </html>
             `
         };
 
@@ -193,6 +216,7 @@ app.post('/send-email', async (req, res) => {
             encoding: 'base64'
         }));
 
+        /*
         const transporter = nodemailer.createTransport({
             host: hapData.smtp,
             port: hapData.port,
@@ -205,9 +229,10 @@ app.post('/send-email', async (req, res) => {
                 rejectUnauthorized: false
             }
         });
+        */
 
         const mailOptions = {
-            from: `${hapData.hap} <${hapData.email_sending}>`,
+            from: `"MedPic" <${process.env.PROTONMAIL_USER}>`,
             to: `${hapData.email_receiving}`,
             subject: 'Medische foto',
             replyTo: username,
@@ -367,6 +392,7 @@ app.post('/api/hap/add', async (req, res) => {
         const insertUsrSql = 'INSERT INTO users (name, organization, username, rights, `function`, hap, password) VALUES (?, ?, ?, "admin", ?, ?, ?)';
         await pool.execute(insertUsrSql, [user, newOrgId, email, job, newHapId, hashedPassword]);
 
+        /*
         const transporter = nodemailer.createTransport({
           service: "hotmail",
           auth: {
@@ -374,24 +400,29 @@ app.post('/api/hap/add', async (req, res) => {
               pass: "009510.Piet!"
           }
         });
+        */
 
         const mailOptions = {
-            from: `MedPic <efluitman@hotmail.com>`,
+            from: `"MedPic" <${process.env.PROTONMAIL_USER}>`,
             to: email,
             subject: `Toegevoegd als adminstrator van ${name} voor MedPic`,
             html: `
-                Beste ${user},<br><br>
-                ${name} is toegevoegd aan <b>MedPic</b> met u als administrator.<br><br>
-                Met MedPic kun je veilig, direct en snel medische foto's versturen.<br><br>
-                Ga naar: <a href="https://medpic.manfluit.nl">MedPic</a><br><br>
-                Log de eerste keer in met je emailadres en als paswoord <b>medpic</b><br>
-                Het wachtwoord dien je dan meteen aan te passen.<br><br>
-                Voor toegang tot het administratie gedeelte dien je ingelogd te zijn op een computer, niet op een mobiele telefoon.<br>
-                Als administrator kun je organisaties en gebruikers per organisatie toevoegen die veilig foto's naar de praktijk kunnen versturen.<br><br>
-                Succes en met vriendelijke groeten,<br><br>
-                Ernst Fluitman<br>
-                Huisarts en bedenker van MedPic
+                <html>
+                <head>
+                    <title>Welkom bij MedPic</title>
+                </head>
+                <body>
+                    <p>Beste ${user},</p>
+                    <p>${name} is toegevoegd aan <strong>MedPic</strong> met u als administrator.</p>
+                    <p>Met MedPic kunt u veilig, direct en snel medische foto's versturen. Ga naar: <a href="https://medpic.manfluit.nl" style="color: #1a73e8;">MedPic</a></p>
+                    <p>Log de eerste keer in met uw emailadres en als paswoord <strong>medpic</strong>. Het wachtwoord dient u dan meteen aan te passen.</p>
+                    <p>Voor toegang tot het administratiegedeelte dient u ingelogd te zijn op een computer, niet op een mobiele telefoon. Als administrator kunt u organisaties en gebruikers per organisatie toevoegen die veilig foto's naar de praktijk kunnen versturen.</p>
+                    <p>Succes en met vriendelijke groeten,</p>
+                    <p>Ernst Fluitman<br>Huisarts en bedenker van MedPic</p>
+                </body>
+                </html>
             `
+        
         };
 
         await transporter.sendMail(mailOptions);
@@ -445,6 +476,7 @@ app.post('/api/users/add', async (req, res) => {
                 encryptedData: hapData.password_encrypted
             });
 
+            /*
             // Email transporter setup
             const transporter = nodemailer.createTransport({
                 host: hapData.smtp,
@@ -458,24 +490,29 @@ app.post('/api/users/add', async (req, res) => {
                     rejectUnauthorized: false
                 }
             });
+            */
 
             // Email options
             const mailOptions = {
-                from: `${hapData.hap} <${hapData.email_sending}>`,
+                from: `"MedPic" <${process.env.PROTONMAIL_USER}>`,
                 to: email,
                 subject: 'Toegevoegd als gebruiker van MedPic',
                 html: `
-                    Beste ${name},<br><br>
-                    Je bent toegevoegd aan <b>MedPic</b>.<br><br>
-                    Met MedPic kun je veilig, direct en snel medische foto's versturen naar ${hapData.hap} namens ${orgName}. Direct met je eigen mobiele camera zodat we goede kwaliteit foto's krijgen.<br>
-                    De foto's worden ook niet op je eigen telefoon bewaard.<br><br>
-                    Ga naar: <a href="https://medpic.manfluit.nl">MedPic</a><br>
-                    Log de eerste keer in met je emailadres en als paswoord <b>medpic</b><br>
-                    Het wachtwoord dien je dan meteen aan te passen.<br><br>
-                    Succes en met vriendelijke groeten,<br><br>
-                    Ernst Fluitman<br>
-                    Huisarts en bedenker van MedPic
-                  `
+                    <html>
+                    <head>
+                        <title>Welkom bij MedPic</title>
+                    </head>
+                    <body>
+                        <p>Beste ${name},</p>
+                        <p>Je bent toegevoegd aan <strong>MedPic</strong>.</p>
+                        <p>Met MedPic kun je veilig, direct en snel medische foto's versturen naar ${hapData.hap} namens ${orgName}. Direct met je eigen mobiele camera zodat we goede kwaliteit foto's krijgen. De foto's worden ook niet op je eigen telefoon bewaard.</p>
+                        <p>Ga naar: <a href="https://medpic.manfluit.nl" style="color: #1a73e8;">MedPic</a></p>
+                        <p>Log de eerste keer in met je emailadres en als paswoord <strong>medpic</strong>. Het wachtwoord dien je dan meteen aan te passen.</p>
+                        <p>Succes en met vriendelijke groeten,</p>
+                        <p>Ernst Fluitman<br>Huisarts en bedenker van MedPic</p>
+                    </body>
+                    </html>
+                `            
             };
 
             // Send email
