@@ -4,26 +4,37 @@ body {
     color: #fff;
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center; /* Center the main container */
-    align-items: flex-start;
-    height: 100vh;
+    overflow-x: auto; /* Allow horizontal scrolling if the screen is too small */
 }
 
 .main-container {
     display: flex;
-    flex-direction: row; /* Arrange sidebar and content side by side */
-    max-width: 1200px; /* Limit the width to avoid spreading too much on wide screens */
+    flex-direction: column;
+    max-width: 1200px;
     width: 100%;
+    margin: auto; /* Center the main container */
+}
+
+.admin-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px; /* Space below the header */
+    margin-bottom: 20px; /* Space between buttons and content */
+}
+
+.main-content {
+    display: flex;
+    flex-direction: row;
     align-items: flex-start;
-    padding-top: 100px; /* Add padding to prevent overlap with fixed header */
+    width: 100%;
 }
 
 .sidebar {
     flex: 0 0 220px; /* Fixed width for sidebar */
     padding: 20px;
     background-color: #444;
-    height: calc(100vh - 100px); /* Adjust height to fill the viewport minus padding */
+    height: calc(100vh - 100px); /* Adjust height to fill the viewport minus header */
     position: sticky;
     top: 100px; /* Stick to below the header */
     margin-right: 20px; /* Space between sidebar and content */
@@ -32,13 +43,17 @@ body {
 .content {
     flex-grow: 1; /* Take up remaining space */
     padding: 20px;
-    max-width: 800px; /* Constrain max width for better readability */
+    max-width: calc(100% - 260px); /* Ensure content width does not overlap with sidebar */
     overflow-y: auto; /* Allow scrolling within the content area */
 }
 
 @media (max-width: 768px) {
     .main-container {
         flex-direction: column; /* Stack sidebar and content vertically for smaller screens */
+        align-items: center;
+    }
+    .main-content {
+        flex-direction: column;
         align-items: center;
     }
     .sidebar {
@@ -74,19 +89,6 @@ h2 {
     text-align: center; /* Centers text horizontally */
     position: relative; /* or 'absolute' if you're positioning it within a specific container */
     z-index: 1000; /* Ensures it's above other content */
-}
-
-#camera-view {
-    display: none; /* Hide video element */
-}
-
-#mobile-only-message {
-    display: none; /* Keep this as is since you toggle display in JavaScript */
-    position: fixed; /* Change position to fixed to keep it relative to the viewport */
-    top: 50%; /* Center vertically */
-    left: 50%; /* Center horizontally */
-    transform: translate(-50%, -50%); /* Adjust the position accurately to the center */
-    text-align: center;
 }
 
 .btn-camera {
