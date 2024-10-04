@@ -12,31 +12,42 @@ body {
 
 .main-container {
     display: flex;
-    flex-direction: column; /* Stack sidebar and content vertically */
+    flex-direction: row; /* Arrange sidebar and content side by side */
     max-width: 1200px; /* Limit the width to avoid spreading too much on wide screens */
     width: 100%;
-    align-items: center;
-    padding-top: 60px; /* Add padding to prevent overlap with fixed header */
+    align-items: flex-start;
+    padding-top: 100px; /* Add padding to prevent overlap with fixed header */
 }
 
 .sidebar {
-    flex: 0 0 auto; /* Sidebar should adjust based on content */
+    flex: 0 0 220px; /* Fixed width for sidebar */
     padding: 20px;
     background-color: #444;
-    width: 220px; /* Fixed width for sidebar */
-    margin-bottom: 20px; /* Space between sidebar and content */
+    height: calc(100vh - 100px); /* Adjust height to fill the viewport minus padding */
+    position: sticky;
+    top: 100px; /* Stick to below the header */
+    margin-right: 20px; /* Space between sidebar and content */
 }
 
 .content {
-    width: 100%; /* Full width of the container */
+    flex-grow: 1; /* Take up remaining space */
     padding: 20px;
     max-width: 800px; /* Constrain max width for better readability */
     overflow-y: auto; /* Allow scrolling within the content area */
 }
 
 @media (max-width: 768px) {
+    .main-container {
+        flex-direction: column; /* Stack sidebar and content vertically for smaller screens */
+        align-items: center;
+    }
     .sidebar {
         width: 100%; /* Full width for smaller screens */
+        height: auto; /* Allow height to adjust based on content */
+        position: relative; /* No sticky position on smaller screens */
+        top: auto;
+        margin-right: 0;
+        margin-bottom: 20px; /* Add space below sidebar */
     }
     .content {
         width: 100%; /* Full width for smaller screens */
