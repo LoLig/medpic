@@ -5,336 +5,193 @@ body {
     margin: 0;
     padding: 0;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    flex-direction: row;
+    align-items: stretch;
     height: 100vh;
 }
 
+.sidebar {
+    flex: 0 0 200px;
+    padding: 20px;
+    background-color: #444;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.content {
+    margin-left: 220px;
+    padding: 20px;
+    width: calc(100% - 220px);
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        flex: 0 0 150px;
+    }
+    .content {
+        margin-left: 170px;
+        width: calc(100% - 170px);
+    }
+}
+
 h1 {
-    font-size: 4em; /* Doubled the font size */
-    color: #c89a0c; /* Darker shade of ochre yellow */
+    font-size: 4em;
+    color: #c89a0c;
     margin-top: 40px;
     margin-bottom: 20px;
-    position: fixed; /* Fixed at the top of the screen */
+    position: fixed;
     top: 40px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1000; /* Ensures it's above other content */
-    cursor: pointer; /* Add pointer cursor for clickability */
+    z-index: 1000;
+    cursor: pointer;
 }
 
-h2 {
-    font-size: 2.5em; /* Adjusted font size */
-    color: #c89a0c; /* Darker shade of ochre yellow */
-    margin-top: 160px; /* Adjust this value based on the actual height of h1 and desired spacing */
-    text-align: center; /* Centers text horizontally */
-    position: relative; /* or 'absolute' if you're positioning it within a specific container */
-    z-index: 1000; /* Ensures it's above other content */
-}
-
-#camera-view {
-    display: none; /* Hide video element */
-}
-
-#mobile-only-message {
-    display: none; /* Keep this as is since you toggle display in JavaScript */
-    position: fixed; /* Change position to fixed to keep it relative to the viewport */
-    top: 50%; /* Center vertically */
-    left: 50%; /* Center horizontally */
-    transform: translate(-50%, -50%); /* Adjust the position accurately to the center */
-    text-align: center;
-}
-
-.btn-camera {
-    margin-top: 20px;
-    padding: 10px 20px;
+.btn-admin-control {
+    margin-bottom: 10px;
+    width: 100%;
+    padding: 10px;
     border: none;
     border-radius: 4px;
-    background-color: #c89a0c; /* Darker shade of ochre yellow */
-    color: #333; /* Dark text */
+    background-color: #c89a0c;
+    color: #333;
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s;
 }
 
-.btn {
-    margin-top: 10px; /* Adjust margin */
-    padding: 5px 10px; /* Adjust padding */
-    border: none;
-    border-radius: 4px;
-    background-color: #c89a0c; /* Darker shade of ochre yellow */
-    color: #333; /* Dark text */
-    font-size: 14px; /* Adjust font size */
-    cursor: pointer;
-    transition: background-color 0.3s;
-    position: fixed; /* Fixed position */
-    top: 50px; /* Adjust distance from top */
-}
-
-.btn:hover {
-    background-color: #a7840a; /* Slightly darker shade on hover */
-}
-
-.btn-admin-control {
-    margin-top: 10px; /* Adjust margin */
-    padding: 5px 10px; /* Adjust padding */
-    border: none;
-    border-radius: 4px;
-    background-color: #c89a0c; /* Darker shade of ochre yellow */
-    color: #333; /* Dark text */
-    font-size: 18px; /* Adjust font size */
-    cursor: pointer;
-    transition: background-color 0.3s;
+.btn-admin-control:hover {
+    background-color: #a7840a;
 }
 
 .btn-admin-control-active {
-    background-color: #c89a0c; /* Change color for highlight */
-    color: white; /* Change text color if needed */
-    /* Add other styling properties as needed */
-}
-
-.btn-admin-control-side {
-    margin-top: 10px; /* Adjust margin */
-    padding: 5px 10px; /* Adjust padding */
-    border: none;
-    border-radius: 4px;
-    background-color: #c89a0c; /* Darker shade of ochre yellow */
-    color: #333; /* Dark text */
-    font-size: 16px; /* Adjust font size */
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.btn-admin-control-side-active {
-    background-color: #c89a0c; /* Change color for highlight */
-    color: white; /* Change text color if needed */
-    /* Add other styling properties as needed */
+    background-color: #c89a0c;
+    color: white;
 }
 
 .admin-panel {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%; /* Take the full width of the body */
+    width: 100%;
 }
 
 .admin-controls {
     display: flex;
     justify-content: center;
-    gap: 20px; /* Add some space between buttons */
-    margin-top: 20px; /* Space below the header */
-}
-
-.hap-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    margin-bottom: 10px; /* Space between items */
-    border-radius: 4px; /* Rounded corners */
-    background-color: #333; /* Dark color for item background */
-    color: #fff; /* Light color for text */
+    gap: 20px;
     margin-top: 20px;
 }
 
-.organization-item {
+.hap-item, .organization-item, .user-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    margin-bottom: 10px; /* Space between items */
-    border-radius: 4px; /* Rounded corners */
-    background-color: #333; /* Dark color for item background */
-    color: #fff; /* Light color for text */
-    margin-top: 20px;
-}
-
-.user-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    margin-bottom: 10px; /* Space between items */
-    border-radius: 4px; /* Rounded corners */
-    background-color: #333; /* Dark color for item background */
-    color: #fff; /* Light color for text */
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #333;
+    color: #fff;
     margin-top: 20px;
 }
 
 .hap-number, .hap-name, .hap-email {
-    margin-right: 10px; /* Space between text elements */
+    margin-right: 10px;
     display: inline-block;
-    white-space: nowrap; /* Prevent wrapping */
+    white-space: nowrap;
 }
 
 .hap-number {
-    width: 20px; /* Fixed width */
+    width: 20px;
 }
 
 .hap-name {
-    width: 400px; /* Adjust based on your content */
+    width: 400px;
 }
 
 .hap-email {
-    width: 350px; /* Adjust based on your content */
+    width: 350px;
 }
 
 .org-number, .org-name, .org-group {
-    margin-right: 10px; /* Space between text elements */
+    margin-right: 10px;
     display: inline-block;
-    white-space: nowrap; /* Prevent wrapping */
+    white-space: nowrap;
 }
 
 .org-number {
-    width: 20px; /* Fixed width */
+    width: 20px;
 }
 
 .org-name {
-    width: 300px; /* Adjust based on your content */
+    width: 300px;
 }
 
 .org-group {
-    width: 250px; /* Adjust based on your content */
+    width: 250px;
 }
 
-.usr-number, .usr-name, .usr-organization, .usr-group, .usr-email, .usr-rights {
-    margin-right: 10px; /* Space between text elements */
+.usr-number, .usr-name, .usr-organization, .usr-email, .usr-rights {
+    margin-right: 10px;
     display: inline-block;
-    white-space: nowrap; /* Prevent wrapping */
+    white-space: nowrap;
 }
 
 .usr-number {
-    width: 20px; /* Fixed width */
+    width: 20px;
 }
 
 .usr-name {
-    width: 200px; /* Adjust based on your content */
+    width: 200px;
 }
 
 .usr-organization {
-    width: 250px; /* Adjust based on your content */
-}
-
-.usr-group {
-    width: 200px; /* Adjust based on your content */
+    width: 250px;
 }
 
 .usr-email {
-    width: 275px; /* Adjust based on your content */
+    width: 275px;
 }
 
 .usr-rights {
-    width: 100px; /* Adjust based on your content */
+    width: 100px;
+}
+
+.edit-btn, .delete-btn {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 .edit-btn {
-    margin-left: auto; /* Push the button to the right */
-    background-color: #c89a0c; /* Ochre yellow for the button */
-    color: #333; /* Dark text */
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 5px 10px;
-    transition: background-color 0.3s;
+    background-color: #c89a0c;
+    color: #333;
 }
 
 .edit-btn:hover {
-    background-color: #a7840a; /* Darker shade on hover */
+    background-color: #a7840a;
 }
 
 .delete-btn {
-    margin-left: 10px; /* Push the button to the right */
-    background-color: #8b0000; /* Dark red */
-    color: #333; /* Dark text */
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 5px 10px;
-    transition: background-color 0.3s;
+    background-color: #8b0000;
+    color: #333;
 }
 
 .delete-btn:hover {
-    background-color: #720000; /* Darker shade on hover */
+    background-color: #720000;
 }
 
-.form-group {
-    width: 450px;
-    display: flex;
-    align-items: center; /* This aligns items vertically in the middle, adjust as needed */
-}
-
-.form-group label {
-    width: 200px; /* Adjust this value based on your needs */
-    text-align: left; /* Aligns the text to the left */
-    margin-right: 10px; /* Adds some space between the label and the input/select */
-}
-
-.form-group-drop-down {
-    margin-top: 14px;
-    width: 450px;
-    display: flex;
-    align-items: center; /* This aligns items vertically in the middle, adjust as needed */
-}
-
-.form-group-drop-down label {
-    width: 200px; /* Adjust this value based on your needs */
-    text-align: left; /* Aligns the text to the left */
-    margin-right: 10px; /* Adds some space between the label and the input/select */
-}
-
-.swal2-input, .swal2-select {
-    flex-grow: 1; /* Makes input/select fields take up the remaining space */
-}
-
-
-/* Hide the file input */
-/* Center the "Open camera" button and ensure it stays centered */
-#capture-btn {
+.add-user-btn, .add-hap-btn, .add-organization-btn {
     display: block;
-    margin: auto; /* Center horizontally in the flex container */
-    position: absolute; /* Positioning relative to the nearest positioned ancestor (body here) */
-    top: 50%; /* Center vertically */
-    left: 50%; /* Center horizontally */
-    transform: translate(-50%, -50%); /* Offset the button by half its width and height to center it exactly */
-    font-size: 20px; /* Adjust font size */
-    padding: 15px 30px; /* Adjust padding */
-    z-index: 1; /* Ensure it's above other content but below the popup */
-}
-
-
-/* Login button */
-#login-btn {
-    position: fixed; /* Fixed position */
-    top: 20px; /* Adjust distance from top */
-    right: 15px; /* Adjust distance from right */
-}
-
-#logged-in {
-    display: none;
-    position: absolute;
-    top: 35px;
-    right: 15px;
-    cursor: pointer; /* Add pointer cursor for clickability */
-}
-
-#super-admin-btn {
-    position: fixed; /* Fixed position */
-    top: 20px; /* Adjust distance from top */
-    right: 85px; /* Adjust distance from right */
-}
-
-#admin-btn {
-    position: fixed; /* Fixed position */
-    top: 20px; /* Adjust distance from top */
-    right: 85px; /* Adjust distance from right */
-}
-
-.add-user-btn {
-    display: block; /* Make it a block-level element */
-    margin: 20px auto; /* Vertical margins as needed, horizontal margins set to auto */
-    background-color: #c89a0c; /* Ochre yellow for the button */
-    color: #333; /* Dark text */
+    margin: 20px auto;
+    background-color: #c89a0c;
+    color: #333;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -342,128 +199,42 @@ h2 {
     transition: background-color 0.3s;
 }
 
-.add-user-btn:hover {
-    background-color: #a7840a; /* Darker shade on hover */
+.add-user-btn:hover, .add-hap-btn:hover, .add-organization-btn:hover {
+    background-color: #a7840a;
 }
 
-.add-hap-btn {
-    display: block; /* Make it a block-level element */
-    margin: 20px auto; /* Vertical margins as needed, horizontal margins set to auto */
-    background-color: #c89a0c; /* Ochre yellow for the button */
-    color: #333; /* Dark text */
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 5px 10px;
-    transition: background-color 0.3s;
-}
-
-.add-hap-btn:hover {
-    background-color: #a7840a; /* Darker shade on hover */
-}
-
-.add-organization-btn {
-    display: block; /* Make it a block-level element */
-    margin: 20px auto; /* Vertical margins as needed, horizontal margins set to auto */
-    background-color: #c89a0c; /* Ochre yellow for the button */
-    color: #333; /* Dark text */
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 5px 10px;
-    transition: background-color 0.3s;
-}
-
-.add-organization-btn:hover {
-    background-color: #a7840a; /* Darker shade on hover */
-}
-
-#email-settings-form .settings-label {
+.form-group, .form-group-drop-down {
+    width: 450px;
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Align items to the start */
-    width: 100%;
-    margin-top: 40px; /* Adjust spacing between fields as needed */
-    margin-bottom: -20px;
+    margin-top: 14px;
 }
 
-#email-settings-form .settings-label input {
-    margin-left: 100px; /* Creates space between the label text and the input */
-    flex-grow: 1; /* Allows input to take up remaining space */
+.form-group label, .form-group-drop-down label {
+    width: 200px;
+    text-align: left;
+    margin-right: 10px;
 }
 
-#save-email-settings {
-    align-self: center;
-    margin-top: 40px;
-    padding: 10px 20px;
-    background-color: #c89a0c;
-    color: #333;
-    border: none;
-    cursor: pointer;
-}
-
-#save-email-receive-settings {
-    align-self: center;
-    margin-top: 40px;
-    padding: 10px 20px;
-    background-color: #c89a0c;
-    color: #333;
-    border: none;
-    cursor: pointer;
-}
-
-#org-settings-form .settings-label {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start; /* Align items to the start */
-    width: 100%;
-    margin-top: 40px; /* Adjust spacing between fields as needed */
-    margin-bottom: -20px;
-}
-
-#org-settings-form .settings-label input {
-    margin-left: 100px; /* Creates space between the label text and the input */
-    flex-grow: 1; /* Allows input to take up remaining space */
-}
-
-#save-org-settings {
-    align-self: center;
-    margin-top: 40px;
-    padding: 10px 20px;
-    background-color: #c89a0c;
-    color: #333;
-    border: none;
-    cursor: pointer;
-}
-
-/* Style the SweetAlert2 modal */
 .swal2-popup {
-    font-size: 1em; /* Adjust font size */
-    background-color: #333; /* Dark background color */
-    color: #fff; /* Light text color */
+    font-size: 1em;
+    background-color: #333;
+    color: #fff;
 }
 
 .swal2-title {
-    color: #c89a0c; /* Title color */
+    color: #c89a0c;
 }
 
-.swal2-input,
-.swal2-textarea {
-    background-color: #555; /* Input background color */
-    color: #fff; /* Input text color */
-    font-size: 0.8em; /* Adjust input font size */
-    padding: 8px; /* Adjust input padding */
-    border-radius: 4px; /* Adjust input border radius */
-    border: 1px solid #555; /* Input border */
+.swal2-input, .swal2-textarea {
+    background-color: #555;
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #555;
 }
 
-.swal2-input:focus,
-.swal2-textarea:focus {
-    border-color: #c89a0c; /* Input focus border color */
-}
-
-.swal2-confirm,
-.swal2-cancel {
+.swal2-confirm, .swal2-cancel {
     border-radius: 4px;
     padding: 10px 20px;
     font-size: 16px;
@@ -471,19 +242,19 @@ h2 {
 }
 
 .swal2-confirm {
-    background-color: #c89a0c; /* Confirm button background color */
-    color: #333; /* Confirm button text color */
+    background-color: #c89a0c;
+    color: #333;
 }
 
 .swal2-confirm:hover {
-    background-color: #a7840a; /* Confirm button hover background color */
+    background-color: #a7840a;
 }
 
 .swal2-cancel {
-    background-color: #820000; /* Cancel button background color */
-    color: #fff; /* Cancel button text color */
+    background-color: #820000;
+    color: #fff;
 }
 
 .swal2-cancel:hover {
-    background-color: #5c0000; /* Cancel button hover background color */
+    background-color: #5c0000;
 }
