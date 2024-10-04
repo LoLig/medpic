@@ -12,43 +12,44 @@ body {
 
 .main-container {
     display: flex;
+    flex-direction: column; /* Stack sidebar and content vertically */
     max-width: 1200px; /* Limit the width to avoid spreading too much on wide screens */
     width: 100%;
-    align-items: stretch;
+    align-items: center;
+    padding-top: 60px; /* Add padding to prevent overlap with fixed header */
 }
 
 .sidebar {
-    flex: 0 0 200px; /* Set a fixed width for the sidebar */
+    flex: 0 0 auto; /* Sidebar should adjust based on content */
     padding: 20px;
     background-color: #444;
-    height: 100vh; /* Full height of the viewport */
-    position: relative; /* Keep position relative to main container */
+    width: 220px; /* Fixed width for sidebar */
+    margin-bottom: 20px; /* Space between sidebar and content */
 }
 
 .content {
-    margin-left: 20px; /* Space between sidebar and content */
+    width: 100%; /* Full width of the container */
     padding: 20px;
-    width: calc(100% - 240px); /* Adjust content width to stay within the container */
+    max-width: 800px; /* Constrain max width for better readability */
     overflow-y: auto; /* Allow scrolling within the content area */
 }
 
 @media (max-width: 768px) {
     .sidebar {
-        flex: 0 0 150px; /* Reduce the width for smaller screens */
+        width: 100%; /* Full width for smaller screens */
     }
     .content {
-        margin-left: 20px;
-        width: calc(100% - 170px);
+        width: 100%; /* Full width for smaller screens */
     }
 }
 
 h1 {
     font-size: 4em; /* Doubled the font size */
     color: #c89a0c; /* Darker shade of ochre yellow */
-    margin-top: 40px;
+    margin-top: 20px;
     margin-bottom: 20px;
     position: fixed; /* Fixed at the top of the screen */
-    top: 40px;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000; /* Ensures it's above other content */
@@ -58,7 +59,7 @@ h1 {
 h2 {
     font-size: 2.5em; /* Adjusted font size */
     color: #c89a0c; /* Darker shade of ochre yellow */
-    margin-top: 160px; /* Adjust this value based on the actual height of h1 and desired spacing */
+    margin-top: 20px;
     text-align: center; /* Centers text horizontally */
     position: relative; /* or 'absolute' if you're positioning it within a specific container */
     z-index: 1000; /* Ensures it's above other content */
@@ -91,7 +92,7 @@ h2 {
 
 .btn {
     margin-top: 10px; /* Adjust margin */
-    padding: 5px 10px; /* Adjust padding */
+    padding: 10px; /* Adjust padding */
     border: none;
     border-radius: 4px;
     background-color: #c89a0c; /* Darker shade of ochre yellow */
@@ -99,8 +100,6 @@ h2 {
     font-size: 14px; /* Adjust font size */
     cursor: pointer;
     transition: background-color 0.3s;
-    position: fixed; /* Fixed position */
-    top: 50px; /* Adjust distance from top */
 }
 
 .btn:hover {
