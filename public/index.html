@@ -294,13 +294,15 @@
         const adminPanelContent = `
             <h1 style="margin-top: 40;">MedPic</h1>
             <h2>Administratie</h2>
-            <div class="admin-controls">
-                <button id="settings-btn" class="btn-admin-control">Instellingen</button>
-                <button id="hap-btn" class="btn-admin-control">Huisartsenpraktijken</button>
-                <button id="organisaties-btn" class="btn-admin-control">Organisaties</button>
-                <button id="users-btn" class="btn-admin-control">Gebruikers</button>
+            <div class="main-container">
+                <div class="admin-controls">
+                    <button id="settings-btn" class="btn-admin-control">Instellingen</button>
+                    <button id="hap-btn" class="btn-admin-control">Huisartsenpraktijken</button>
+                    <button id="organisaties-btn" class="btn-admin-control">Organisaties</button>
+                    <button id="users-btn" class="btn-admin-control">Gebruikers</button>
+                </div>
+                <div id="admin-content"></div>
             </div>
-            <div id="admin-content"></div>
         `;
 
         adminPanelContainer.innerHTML = adminPanelContent;
