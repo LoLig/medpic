@@ -279,6 +279,7 @@
         }
     });
 
+<!-- 
     document.getElementById('super-admin-btn').addEventListener('click', function() {
         // Clear current body content or hide it instead of clearing, based on your needs
         document.body.innerHTML = ''; // This removes everything, consider hiding if necessary
@@ -346,6 +347,97 @@
         // Optionally, automatically trigger one of the buttons to be clicked/highlighted on load
         document.getElementById('settings-btn').click();
     });
+        -->
+
+    document.getElementById('super-admin-btn').addEventListener('click', function() {
+        // Clear current body content or hide it instead of clearing, based on your needs
+        document.body.innerHTML = ''; // This removes everything, consider hiding if necessary
+    
+        // Create a container for the new layout that allows top alignment within the flex-centered body
+        const adminPanelContainer = document.createElement('div');
+        adminPanelContainer.classList.add('main-container'); // Add main container class to keep consistent styling
+    
+        // Create the header
+        const header = document.createElement('header');
+        header.innerHTML = `<h1>Administratie MedPic</h1>`;
+        adminPanelContainer.appendChild(header);
+    
+        // Create the admin controls section with horizontal buttons
+        const adminControls = document.createElement('div');
+        adminControls.classList.add('admin-controls');
+        adminControls.innerHTML = `
+            <button id="settings-btn" class="btn-admin-control">Instellingen</button>
+            <button id="hap-btn" class="btn-admin-control">Huisartsenpraktijken</button>
+            <button id="organisaties-btn" class="btn-admin-control">Organisaties</button>
+            <button id="users-btn" class="btn-admin-control">Gebruikers</button>
+        `;
+        adminPanelContainer.appendChild(adminControls);
+    
+        // Create the main content wrapper with sidebar and content
+        const mainContent = document.createElement('div');
+        mainContent.classList.add('main-content');
+    
+        // Create the sidebar
+        const sidebar = document.createElement('div');
+        sidebar.classList.add('sidebar');
+        sidebar.innerHTML = `
+            <button class="btn-admin-control-side">Emails versturen</button>
+            <button class="btn-admin-control-side">Emails ontvangen</button>
+            <button class="btn-admin-control-side">Organisaties</button>
+            <button class="btn-admin-control-side">Functies</button>
+            <button class="btn-admin-control-side">Gebruikers</button>
+        `;
+        mainContent.appendChild(sidebar);
+    
+        // Create the content area
+        const content = document.createElement('div');
+        content.classList.add('content');
+        content.id = 'admin-content';
+        mainContent.appendChild(content);
+    
+        // Append the main content to the admin panel container
+        adminPanelContainer.appendChild(mainContent);
+    
+        // Add everything to the body
+        document.body.appendChild(adminPanelContainer);
+    
+        // Define a function to handle highlighting buttons
+        function highlightButton(activeButtonId) {
+            const buttons = document.querySelectorAll('.btn-admin-control');
+            buttons.forEach(button => {
+                if (button.id === activeButtonId) {
+                    button.classList.add('btn-admin-control-active'); // Highlight active button
+                } else {
+                    button.classList.remove('btn-admin-control-active'); // Remove highlight from other buttons
+                }
+            });
+        }
+    
+        // Modify existing event listeners to include highlighting logic
+        document.getElementById('settings-btn').addEventListener('click', function() {
+            loadSettings(); // Your existing function to load content
+            highlightButton('settings-btn'); // Highlight this button
+        });
+    
+        document.getElementById('hap-btn').addEventListener('click', function() {
+            loadHAPs(); // Your existing function to load content
+            highlightButton('hap-btn'); // Highlight this button
+        });
+    
+        document.getElementById('organisaties-btn').addEventListener('click', function() {
+            loadOrganizations(); // Your existing function to load content
+            highlightButton('organisaties-btn'); // Highlight this button
+        });
+    
+        document.getElementById('users-btn').addEventListener('click', function() {
+            loadUsers(); // Your existing function to load content
+            highlightButton('users-btn'); // Highlight this button
+        });
+    
+        // Optionally, automatically trigger one of the buttons to be clicked/highlighted on load
+        document.getElementById('settings-btn').click();
+    });
+
 
     function loadHAPs() {
       fetch('/api/haps')
