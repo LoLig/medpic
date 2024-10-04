@@ -5,9 +5,16 @@ body {
     margin: 0;
     padding: 0;
     display: flex;
-    flex-direction: row; /* Layout the sidebar and content in a row */
-    align-items: stretch;
+    justify-content: center; /* Center the main container */
+    align-items: flex-start;
     height: 100vh;
+}
+
+.main-container {
+    display: flex;
+    max-width: 1200px; /* Limit the width to avoid spreading too much on wide screens */
+    width: 100%;
+    align-items: stretch;
 }
 
 .sidebar {
@@ -15,15 +22,13 @@ body {
     padding: 20px;
     background-color: #444;
     height: 100vh; /* Full height of the viewport */
-    position: fixed; /* Fix the position to stay on the left side */
-    top: 0;
-    left: 0;
+    position: relative; /* Keep position relative to main container */
 }
 
 .content {
-    margin-left: 220px; /* Adjust margin based on the width of the sidebar */
+    margin-left: 20px; /* Space between sidebar and content */
     padding: 20px;
-    width: calc(100% - 220px); /* Adjust content width to not overlap with the sidebar */
+    width: calc(100% - 240px); /* Adjust content width to stay within the container */
     overflow-y: auto; /* Allow scrolling within the content area */
 }
 
@@ -32,7 +37,7 @@ body {
         flex: 0 0 150px; /* Reduce the width for smaller screens */
     }
     .content {
-        margin-left: 170px;
+        margin-left: 20px;
         width: calc(100% - 170px);
     }
 }
