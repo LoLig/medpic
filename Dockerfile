@@ -18,6 +18,3 @@ EXPOSE 2001
 
 # Command to run the Node.js server
 CMD ["node", "server.js"]
-
-#ENVIRONMENT VALUES
-ENV SECRET_KEY_2 hiH*WHyJ26@WJGwFBvbN!NRTGCWok8et
