@@ -1459,11 +1459,12 @@
                 console.log("Received data:", data);
                 adminContent.innerHTML = `
                     <div id="org-settings-form">
-                        <label for="organization-select" class="form-label">Organisatie:</label>
+                        <label for="organization-select" class="settings-label form-label">Organisatie:
                         <select id="organization-select" class="form-control">
                             <option>Selecteer een organisatie</option>
                             ${data.organizations.map(org => `<option value="${org.id}">${org.organization}</option>`).join('')}
                         </select>
+                        </label>
                     </div>
                     <div id="org-details">
                         <!-- Organization details will be loaded here -->
