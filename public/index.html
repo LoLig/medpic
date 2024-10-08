@@ -1270,7 +1270,8 @@
         if (userData.rights === 'super-admin') {
             settingsContainer.style.left = '100px'; // Closer to the left for super admins
         } else {
-            settingsContainer.style.left = '450px'; // Standard position for other users
+            settingsContainer.style.left = '50%'; // Standard position for other users
+            settingsContainer.style.marginLeft = '-400px';
         }
 
         // Ensure the container is cleared before adding new buttons
