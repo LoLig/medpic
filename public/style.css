@@ -381,15 +381,17 @@ h2 {
 #email-settings-form .settings-label {
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Align items to the start */
+    justify-content: space-between; /* Align items to the start */
     width: 100%;
     margin-top: 40px; /* Adjust spacing between fields as needed */
     margin-bottom: -20px;
 }
 
 #email-settings-form .settings-label input {
-    margin-left: 100px; /* Creates space between the label text and the input */
+    margin-left: 10px; /* Creates space between the label text and the input */
     flex-grow: 1; /* Allows input to take up remaining space */
+    min-width: 240px;
+    max-width: 240px;
 }
 
 #save-email-settings {
