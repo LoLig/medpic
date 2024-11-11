@@ -320,20 +320,20 @@ h2 {
     color: #fff; /* White text */
     border: none;
     border-radius: 4px;
-    padding: 25px 10px;
+    padding: 5px 10px;
     cursor: pointer; /* Add pointer cursor for clickability */
 }
 
 #super-admin-btn {
     position: fixed; /* Fixed position */
     top: 20px; /* Adjust distance from top */
-    right: 85px; /* Adjust distance from right */
+    right: 105px; /* Adjust distance from right */
 }
 
 #admin-btn {
     position: fixed; /* Fixed position */
     top: 20px; /* Adjust distance from top */
-    right: 85px; /* Adjust distance from right */
+    right: 105px; /* Adjust distance from right */
 }
 
 .add-user-btn {
