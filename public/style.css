@@ -324,7 +324,7 @@ h2 {
     cursor: pointer; /* Add pointer cursor for clickability */
 }
 
-#logged-in-as {
+#logged-in-info {
     display: block; /* Make sure it is visible */
     position: absolute;
     top: 20px; /* Adjust distance from top */
