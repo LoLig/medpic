@@ -316,6 +316,7 @@ h2 {
     position: absolute;
     top: 20px; /* Adjust distance from top */
     right: 15px;
+    left: 15px;
     background-color: #8b0000; /* Dark red color */
     color: #fff; /* White text */
     border: none;
