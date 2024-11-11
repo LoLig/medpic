@@ -61,18 +61,27 @@
     </script>
 
     <h1>MedPic</h1>
+    <div class="top-bar">
+        <div class="logged-in-info">
+            Ingelogd als: <span id="username-placeholder">[username]</span>
+        </div>
+        <button id="login-btn" onclick="showLoginForm()" class="btn">Login</button>
+        <button id="admin-btn" style="display: none;" class="btn">Admin</button>
+        <button id="super-admin-btn" style="display: none;" class="btn">Super Admin</button>
+        <button id="logged-in" onclick="showLogoutPopup()" class="btn btn-red">Uitloggen</button>
+    </div>
+
     <!-- File input element for capturing images -->
     <button id="capture-btn" class="btn-camera">Open camera</button>
     <div id="mobile-only-message" style="display: none; text-align: center; padding: 20px;">
         Foto's maken werkt alleen vanaf je mobiele telefoon.
     </div>
-    <!-- Add a login button -->
+    <!--  
     <button id="login-btn" onclick="showLoginForm()" class="btn">Login</button>
-    <!-- Logged in message -->
     <button id="admin-btn" style="display: none;" class="btn">Admin</button>
     <button id="super-admin-btn" style="display: none;" class="btn">Super Admin</button>
-    <!-- <div id="logged-in" onclick="showLogoutPopup()">Ingelogd</div>  test-->
     <button id="logged-in" onclick="showLogoutPopup()" class="btn">Uitloggen</button>
+    -->
 
     <input type="file" accept="image/*;capture=camera" id="camera-input" style="display: none;" capture>
 

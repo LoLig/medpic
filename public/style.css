@@ -303,6 +303,36 @@ h2 {
 }
 
 
+.top-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    background-color: #1e1e1e; /* Match your existing background */
+    z-index: 1000;
+}
+
+.logged-in-info {
+    margin-right: auto;
+    color: #fff;
+    font-size: 16px;
+    padding-right: 20px;
+}
+
+.btn-red {
+    background-color: #8b0000; /* Red color for Uitloggen */
+    color: #fff;
+}
+
+.btn-red:hover {
+    background-color: #720000; /* Darker red on hover */
+}
+
+
+
 /* Login button */
 #login-btn {
     position: fixed; /* Fixed position */
