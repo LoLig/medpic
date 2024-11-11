@@ -308,12 +308,13 @@ h2 {
     position: fixed; /* Fixed position */
     top: 20px; /* Adjust distance from top */
     right: 15px; /* Adjust distance from right */
+    padding: 5px 10px;
 }
 
 #logged-in {
     display: none;
     position: absolute;
-    top: 35px;
+    top: 20px; /* Adjust distance from top */
     right: 15px;
     background-color: #8b0000; /* Dark red color */
     color: #fff; /* White text */
