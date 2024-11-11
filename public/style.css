@@ -302,24 +302,29 @@ h2 {
     z-index: 1; /* Ensure it's above other content but below the popup */
 }
 
-
+/* Top Bar Adjustments */
 .top-bar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between; /* Align logged-in info and buttons on opposite sides */
     align-items: center;
     width: 100%;
-    padding: 10px 20px;
+    padding: 10px 40px; /* Adjust padding to space out the content from the sides */
     position: fixed;
     top: 0;
     background-color: #1e1e1e; /* Match your existing background */
     z-index: 1000;
 }
 
+/* Logged-in Info Styling */
 .logged-in-info {
-    margin-right: auto;
     color: #fff;
     font-size: 16px;
     padding-right: 20px;
+}
+
+/* Button Spacing Adjustment */
+.btn-admin-control, .btn-red {
+    margin-left: 10px; /* Adjust spacing between buttons */
 }
 
 .btn-red {
