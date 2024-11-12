@@ -317,7 +317,7 @@ h2 {
     top: 20px; /* Adjust distance from top */
     right: 15px;
     background-color: #8b0000; /* Dark red color */
-    color: #fff; /* White text */
+    color: #E8E8E8; /* White text */
     border: none;
     border-radius: 4px;
     padding: 5px 10px;
@@ -327,9 +327,9 @@ h2 {
 #logged-in-info {
     display: block; /* Make sure it is visible */
     position: absolute;
+    color: #E8E8E8;
     top: 30px; /* Adjust distance from top */
     left: 15px; /* Align to the left side of the screen */
-    color: #fff; /* White text */
 }
 
 #super-admin-btn {
