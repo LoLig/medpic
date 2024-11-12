@@ -404,7 +404,7 @@ app.post('/api/hap/add', async (req, res) => {
                 <body>
                     <p>Beste ${user},</p>
                     <p>${name} is toegevoegd aan <strong>MedPic</strong> met u als administrator.</p>
-                    <p>Met MedPic kunt u veilig, direct en snel medische foto's versturen. Ga naar: <a href="https://medpic.manfluit.nl" style="color: #1a73e8;">MedPic</a></p>
+                    <p>Met MedPic kunt u veilig, direct en snel medische foto's versturen. Ga naar: <a href="https://www.medpic.nl" style="color: #1a73e8;">MedPic</a></p>
                     <p>Log de eerste keer in met uw emailadres en als paswoord <strong>medpic</strong>. Het wachtwoord dient u dan meteen aan te passen.</p>
                     <p>Voor toegang tot het administratiegedeelte dient u ingelogd te zijn op een computer, niet op een mobiele telefoon. Als administrator kunt u organisaties en gebruikers per organisatie toevoegen die veilig foto's naar de praktijk kunnen versturen.</p>
                     <p>Succes en met vriendelijke groeten,</p>
@@ -478,7 +478,7 @@ app.post('/api/users/add', async (req, res) => {
                     <p>Beste ${name},</p>
                     <p>Je bent toegevoegd aan <strong>MedPic</strong>.</p>
                     <p>Met MedPic kun je veilig, direct en snel medische foto's versturen naar ${hapData.hap} namens ${orgName}. Direct met je eigen mobiele camera zodat we goede kwaliteit foto's krijgen. De foto's worden ook niet op je eigen telefoon bewaard.</p>
-                    <p>Ga naar: <a href="https://medpic.manfluit.nl" style="color: #1a73e8;">MedPic</a></p>
+                    <p>Ga naar: <a href="https://www.medpic.nl" style="color: #1a73e8;">MedPic</a></p>
                     <p>Log de eerste keer in met je emailadres en als paswoord <strong>medpic</strong>. Het wachtwoord dien je dan meteen aan te passen.</p>
                     <p>Succes en met vriendelijke groeten,</p>
                     <p>Ernst Fluitman<br>Huisarts en bedenker van MedPic</p>
@@ -535,7 +535,7 @@ app.post('/api/users/add', async (req, res) => {
                         <p>Beste ${name},</p>
                         <p>Je bent toegevoegd aan <strong>MedPic</strong>.</p>
                         <p>Met MedPic kun je veilig, direct en snel medische foto's versturen naar ${hapData.hap} namens ${orgName}. Direct met je eigen mobiele camera zodat we goede kwaliteit foto's krijgen. De foto's worden ook niet op je eigen telefoon bewaard.</p>
-                        <p>Ga naar: <a href="https://medpic.manfluit.nl" style="color: #1a73e8;">MedPic</a></p>
+                        <p>Ga naar: <a href="https://www.medpic.nl" style="color: #1a73e8;">MedPic</a></p>
                         <p>Log de eerste keer in met je emailadres en als paswoord <strong>medpic</strong>. Het wachtwoord dien je dan meteen aan te passen.</p>
                         <p>Succes en met vriendelijke groeten,</p>
                         <p>Ernst Fluitman<br>Huisarts en bedenker van MedPic</p>
@@ -612,7 +612,7 @@ app.post('/api/users/add', async (req, res) => {
                     Je bent toegevoegd aan <b>MedPic</b>.<br><br>
                     Met MedPic kun je veilig, direct en snel medische foto's versturen naar ${hapData.hap} namens ${orgName}. Direct met je eigen mobiele camera zodat we goede kwaliteit foto's krijgen.<br>
                     De foto's worden ook niet op je eigen telefoon bewaard.<br><br>
-                    Ga naar: <a href="https://medpic.manfluit.nl">MedPic</a><br>
+                    Ga naar: <a href="https://www.medpic.nl">MedPic</a><br>
                     Log de eerste keer in met je emailadres en als paswoord <b>medpic</b><br>
                     Het wachtwoord dien je dan meteen aan te passen.<br><br>
                     Succes en met vriendelijke groeten,<br><br>
