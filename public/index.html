@@ -256,7 +256,7 @@
         });
     }
 
-    function showLogoutPopup() {
+    function showLogoutPopup() { 
         Swal.fire({
             title: 'Uitloggen',
             text: 'Weet je zeker dat je wilt uitloggen?',
@@ -266,6 +266,10 @@
             confirmButtonText: 'Log uit',
             confirmButtonColor: '#8b0000',
             cancelButtonText: 'Annuleer',
+            customClass: {
+                confirmButton: 'custom-confirm-button',
+                cancelButton: 'custom-cancel-button'
+            }
         }).then((result) => {
             if (result.isConfirmed) {
                 isLoggedIn = false;
@@ -276,6 +280,7 @@
             }
         });
     }
+
 
     document.getElementById('capture-btn').addEventListener('click', function() {
         if (!isLoggedIn) {

@@ -503,3 +503,14 @@ h2 {
 .swal2-cancel:hover {
     background-color: #5c0000; /* Cancel button hover background color */
 }
+
+.swal2-confirm.custom-confirm-button {
+    background-color: #8b0000 !important;
+    color: #E8E8E8 !important;
+}
+
+.swal2-cancel.custom-cancel-button {
+    background-color: #c89a0c !important;
+    color: #FFFFFF !important;
+}
+
