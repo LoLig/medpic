@@ -41,13 +41,15 @@
         // Get references to the button and the message
         const cameraButton = document.getElementById('capture-btn');
         const mobileOnlyMessage = document.getElementById('mobile-only-message');
+        const loggedinInfo = document.getElementById('logged-in-info');
         const adminButton = document.getElementById('admin-btn');
         const superadminButton = document.getElementById('super-admin-btn');
-
+        
         if (isMobile) {
             // Show the camera button and hide the message
             cameraButton.style.display = 'block';
             mobileOnlyMessage.style.display = 'none';
+            //loggedinInfo.style.display = 'none';
             adminButton.style.display = 'none';
             superadminButton.style.display = 'none';
         } else {
@@ -66,7 +68,7 @@
     <div id="mobile-only-message" style="display: none; text-align: center; padding: 20px;">
         Foto's maken werkt alleen vanaf je mobiele telefoon.
     </div>
-    <div id="logged-in-info">
+    <div id="logged-in-info" style="display: none;">
         Ingelogd als: <span id="username-placeholder">[username]</span>
     </div>
     <!-- Add a login button -->
@@ -1594,8 +1596,9 @@
     function updateLoginState() {
         const loginBtn = document.getElementById('login-btn');
         const loggedInMsg = document.getElementById('logged-in');
+        const isloggedinInfo = document.getElementById('logged-in-info'); // Get the logged in info
         const superAdminBtn = document.getElementById('super-admin-btn'); // Get the super admin button
-        const adminBtn = document.getElementById('admin-btn'); // Get the super admin button
+        const adminBtn = document.getElementById('admin-btn'); // Get the admin button
 
         // Display login button or logged-in message based on isLoggedIn
         loginBtn.style.display = isLoggedIn ? 'none' : 'block';
@@ -1603,6 +1606,13 @@
 
         // Detect if the user is on a mobile device. This regex covers most cases.
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if (isLoggedIn){
+            isloggedinInfo.style.display = 'block'; // Show the Logged In Info
+        }
+        else {
+            isloggedinInfo.style.display = 'none'; // Ensure it's hidden if not logged in
+        }
 
         // Additionally, check for super admin rights
         if (isLoggedIn && !isMobile) {
@@ -1614,7 +1624,7 @@
                 adminBtn.style.display = 'none'; // Hide if not super_admin
             }
             else if (userData && userData.rights === 'admin') {
-                adminBtn.style.display = 'block'; // Show the Super Admin button
+                adminBtn.style.display = 'block'; // Show the Admin button
                 superAdminBtn.style.display = 'none'; // Hide if not super_admin
             }
             else {
