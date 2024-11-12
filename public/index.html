@@ -1615,7 +1615,12 @@
             // If user data exists, display the user's name and organization
             if (userData) {
                 loggedinInfo.style.display = 'block';
-                usernamePlaceholder.innerText = `${userData.name} (${userData.organizationName})`;
+                if (!isMobile) {
+                    usernamePlaceholder.innerText = `${userData.name} (${userData.organizationName})`;
+                } else {
+                    usernamePlaceholder.innerHTML = `<br>${userData.name}<br>(${userData.organizationName})`;
+
+                }
             }
 
             // Additionally, check for super admin rights and show the appropriate buttons
