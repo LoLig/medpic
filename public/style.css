@@ -327,7 +327,7 @@ h2 {
 #logged-in-info {
     display: block; /* Make sure it is visible */
     position: absolute;
-    top: 20px; /* Adjust distance from top */
+    top: 25px; /* Adjust distance from top */
     left: 15px; /* Align to the left side of the screen */
     color: #fff; /* White text */
 }
