@@ -90,24 +90,35 @@ app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const sql = 'SELECT * FROM users WHERE username = ?';
     try {
+        // Fetch user data by username
         const [results] = await pool.query(sql, [username]);
         if (results.length > 0) {
             const user = results[0];
 
             try {
+                // Verify the user's password
                 const match = await bcrypt.compare(password, user.password);
                 if (match) {
+                    // Fetch organization name based on user's organization ID
+                    const [orgResults] = await pool.query('SELECT organization FROM organizations WHERE id = ?', [user.organization]);
+                    const organizationName = orgResults.length > 0 ? orgResults[0].organization : 'Unknown Organization';
+
+                    // Construct the user data including the organization name
                     const userData = {
                         id: user.id,
                         name: user.name,
                         organization: user.organization,
+                        organizationName: organizationName,                
                         username: user.username,
                         rights: user.rights,
                         hap: user.hap
                     };
+
+                    // Create JWT token
                     const token = jwt.sign({ id: user.id, username: user.username }, jwtSecret, { expiresIn: '1000y' });
                     const isFirstLogin = user.first_login === 'yes';
 
+                    // Send response with user data and token
                     res.json({ success: true, token, userData, isFirstLogin });
                 } else {
                     res.json({ success: false, message: 'Invalid credentials' });
