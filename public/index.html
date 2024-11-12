@@ -1596,7 +1596,8 @@
     function updateLoginState() {
         const loginBtn = document.getElementById('login-btn');
         const loggedInMsg = document.getElementById('logged-in');
-        const isloggedinInfo = document.getElementById('logged-in-info'); // Get the logged in info
+        const loggedinInfo = document.getElementById('logged-in-info'); // Get the logged in info
+        const usernamePlaceholder = document.getElementById('username-placeholder'); // Placeholder for username and organization
         const superAdminBtn = document.getElementById('super-admin-btn'); // Get the super admin button
         const adminBtn = document.getElementById('admin-btn'); // Get the admin button
 
@@ -1607,35 +1608,39 @@
         // Detect if the user is on a mobile device. This regex covers most cases.
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        if (isLoggedIn){
-            isloggedinInfo.style.display = 'block'; // Show the Logged In Info
-        }
-        else {
-            isloggedinInfo.style.display = 'none'; // Ensure it's hidden if not logged in
-        }
-
-        // Additionally, check for super admin rights
-        if (isLoggedIn && !isMobile) {
+        if (isLoggedIn) {
+            // Retrieve user data from localStorage
             const userData = JSON.parse(localStorage.getItem('userData'));
 
-            // Check if the userData exists and the user has super_admin rights
-            if (userData && userData.rights === 'super_admin') {
-                superAdminBtn.style.display = 'block'; // Show the Super Admin button
-                adminBtn.style.display = 'none'; // Hide if not super_admin
+            // If user data exists, display the user's name and organization
+            if (userData) {
+                loggedinInfo.style.display = 'block';
+                usernamePlaceholder.innerText = `${userData.name} (${userData.organization})`;
             }
-            else if (userData && userData.rights === 'admin') {
-                adminBtn.style.display = 'block'; // Show the Admin button
-                superAdminBtn.style.display = 'none'; // Hide if not super_admin
-            }
-            else {
-                superAdminBtn.style.display = 'none'; // Hide if not super_admin
-                adminBtn.style.display = 'none'; // Hide if not super_admin
+
+            // Additionally, check for super admin rights and show the appropriate buttons
+            if (!isMobile) {
+                if (userData && userData.rights === 'super_admin') {
+                    superAdminBtn.style.display = 'block';
+                    adminBtn.style.display = 'none';
+                } else if (userData && userData.rights === 'admin') {
+                    adminBtn.style.display = 'block';
+                    superAdminBtn.style.display = 'none';
+                } else {
+                    superAdminBtn.style.display = 'none';
+                    adminBtn.style.display = 'none';
+                }
+            } else {
+                superAdminBtn.style.display = 'none';
+                adminBtn.style.display = 'none';
             }
         } else {
-            superAdminBtn.style.display = 'none'; // Ensure it's hidden if not logged in
-            adminBtn.style.display = 'none'; // Ensure it's hidden if not logged in
+            loggedinInfo.style.display = 'none';
+            superAdminBtn.style.display = 'none';
+            adminBtn.style.display = 'none';
         }
     }
+
 
     document.getElementById('admin-btn').addEventListener('click', function() {
         // Clear current body content or hide it instead of clearing, based on your needs
