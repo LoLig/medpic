@@ -439,31 +439,30 @@ app.post('/api/hap/add', async (req, res) => {
 
 // Endpoint to add a organization
 app.post('/api/organization/add', async (req, res) => {
-    const { name, group, hap, existingOrganizationId } = req.body;
+    const { name, group, hapId, selectedOrganizationId } = req.body;
 
     try {
-        if (existingOrganizationId) {
+        if (selectedOrganizationId) {
             // Link existing organization to the new HAP
-            const sql = 'UPDATE organizations SET hap = ? WHERE id = ?';
-            const [results] = await pool.query(sql, [hap, existingOrganizationId]);
+            const linkSql = 'INSERT INTO organization_hap (organization_id, hap_id) VALUES (?, ?)';
+            await pool.execute(linkSql, [selectedOrganizationId, hapId]);
 
-            if (results.affectedRows === 0) {
-                return res.status(404).send({ message: 'Organization not found or no changes made' });
-            }
-            res.send({ message: 'Existing organization linked successfully' });
+            res.json({ message: 'Existing organization linked to the new HAP successfully.' });
         } else {
-            // Add new organization
-            const sql = 'INSERT INTO organizations (organization, `group`, hap) VALUES (?, ?, ?)';
-            const [results] = await pool.query(sql, [name, group, hap]);
+            // Create a new organization
+            const insertOrgSql = 'INSERT INTO organizations (organization, `group`) VALUES (?, ?)';
+            const [orgResults] = await pool.execute(insertOrgSql, [name, group]);
+            const newOrgId = orgResults.insertId;
 
-            if (results.affectedRows === 0) {
-                throw new Error('Insert failed, no rows affected.');
-            }
-            res.send({ message: 'New organization added successfully' });
+            // Link the new organization to the HAP
+            const linkSql = 'INSERT INTO organization_hap (organization_id, hap_id) VALUES (?, ?)';
+            await pool.execute(linkSql, [newOrgId, hapId]);
+
+            res.json({ message: 'New organization added and linked to the HAP successfully.' });
         }
     } catch (error) {
-        console.error('Error adding or linking Organization:', error);
-        res.status(500).send({ message: 'Error adding or linking Organization', details: error.message });
+        console.error('Error adding or linking organization:', error);
+        res.status(500).json({ message: 'Error processing your request', details: error.message });
     }
 });
 
