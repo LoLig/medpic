@@ -273,7 +273,7 @@ app.get('/api/organizations', async (req, res) => {
 });
 
 app.get('/api/fillorganizations', async (req, res) => {
-    let sql = 'SELECT id, organization, `group` FROM organizations WHERE `group` != "Huisartsenpraktijk"';
+    let sql = 'SELECT id, organization, `group` FROM organizations';
     try {
         const [results] = await pool.query(sql);
         res.json({ organizations: results });
