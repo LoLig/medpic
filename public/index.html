@@ -1036,116 +1036,69 @@
     }
 
     function showAddOrganizationForm() {
-    const userData = JSON.parse(localStorage.getItem('userData'));
+        const userData = JSON.parse(localStorage.getItem('userData'));
 
-    // HTML content to be displayed in the SweetAlert
-    let htmlContent = `
-        <div class="form-group">
-            <label for="organization-select">Selecteer Bestaande Organisatie:</label>
-            <select id="organization-select" class="swal2-input">
-                <option value="">Voer nieuwe organisatie in</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="name">Naam:</label>
-            <input id="name" class="swal2-input" placeholder="Naam">
-        </div>
-        <div class="form-group">
-            <label for="group">Groep:</label>
-            <select id="group" class="swal2-input">
-                <option value="Huisartsenpraktijk">Huisartsenpraktijk</option>
-                <option value="Thuiszorg">Thuiszorg</option>
-                <option value="Verpleeginstelling">Verpleeginstelling</option>
-                <option value="GGZ">GGZ</option>
-                <option value="Overig">Overig</option>
-            </select>
-        </div>`;
+        let htmlContent = `<div class="form-group"><label for="swal-input3">Naam:</label><input id="name" class="swal2-input" placeholder="Naam"></div>
+                           <div class="form-group"><label for="swal-input5">Groep:</label><input id="group" class="swal2-input" placeholder="Groep"></div>`;
 
-    // Fetch existing organizations and populate the dropdown
-    fetch('/api/fillorganizations')
-        .then(response => response.json())
-        .then(data => {
-            const selectElement = document.createElement('select');
-            selectElement.id = 'organization-select';
-            selectElement.classList.add('swal2-input');
+        if (userData && userData.rights === 'super_admin') {
+            // Super-admin: fetch and populate HAP dropdown
+            fetch('/api/hap-names')
+                .then(response => response.json())
+                .then(data => {
+                    const selectElement = document.createElement('select');
+                    selectElement.id = 'hap';
+                    selectElement.classList.add('swal2-input');
+                    data.hapNames.forEach(hap => {
+                        const optionElement = document.createElement('option');
+                        optionElement.value = hap.id; // Use HAP ID as value
+                        optionElement.textContent = hap.name; // Use HAP name as display text
+                        selectElement.appendChild(optionElement);
+                    });
+                    htmlContent += `<div class="form-group-drop-down">
+                                        <label for="hap">Huisartsenpraktijk:</label>
+                                        ${selectElement.outerHTML}
+                                    </div>`;
+                    showSwalDialog(htmlContent);
+                });
+        } else {
+            // Non-super-admin: Display HAP name in a readonly input and HAP ID in a hidden input
+            fetch(`/api/hap-name/${userData.hap}`)
+                .then(response => response.json())
+                .then(data => {
+                    const hapName = data.name;
+                    htmlContent += `<div class="form-group-drop-down">
+                                        <label for="hap-name">Huisartsenpraktijk:</label>
+                                        <input id="hap-name" class="swal2-input" value="${hapName}" readonly>
+                                        <input id="hap" type="hidden" value="${userData.hap}">
+                                    </div>`;
+                    showSwalDialog(htmlContent);
+                })
+                .catch(error => {
+                    console.error('Error fetching HAP name:', error);
+                });
+        }
+    }
 
-            // Populate the dropdown with existing organizations, excluding "Huisartsenpraktijk"
-            data.organizations.forEach(org => {
-                if (org.group !== 'Huisartsenpraktijk') {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = org.id; // Use organization ID as value
-                    optionElement.textContent = org.organization; // Use organization name as display text
-                    optionElement.dataset.group = org.group; // Store group in data attribute
-                    selectElement.appendChild(optionElement);
-                }
-            });
-
-            // Replace placeholder select element in HTML content
-            htmlContent = htmlContent.replace('<select id="organization-select" class="swal2-input"></select>', selectElement.outerHTML);
-
-            // Show SweetAlert dialog with the form
-            showSwalDialog(htmlContent);
-
-            // Add event listener after dialog is shown
-            document.getElementById('organization-select').addEventListener('change', (event) => {
-                const selectedOption = event.target.options[event.target.selectedIndex];
-                const organizationNameInput = document.getElementById('name');
-                const groupSelect = document.getElementById('group');
-
-                if (selectedOption.value) {
-                    // Organization selected: pre-fill name and group, and disable inputs
-                    organizationNameInput.value = selectedOption.textContent;
-                    groupSelect.value = selectedOption.dataset.group;
-
-                    // Disable the inputs for existing organization
-                    organizationNameInput.disabled = true;
-                    groupSelect.disabled = true;
-                } else {
-                    // Clear selection to allow new organization input
-                    organizationNameInput.value = '';
-                    groupSelect.value = '';
-
-                    // Enable inputs for a new organization
-                    organizationNameInput.disabled = false;
-                    groupSelect.disabled = false;
-                }
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching organizations:', error);
-        });
-
-    // Function to display the SweetAlert
-    function showSwalDialog(html) {
+    function showSwalDialog(htmlContent) {
         Swal.fire({
-            title: 'Organisatie Toevoegen',
-            html: html,
+            title: 'Organisatie toevoegen',
+            html: htmlContent,
             focusConfirm: false,
             showCancelButton: true,
-            confirmButtonText: 'Opslaan',
+            confirmButtonText: 'Toevoegen',
             confirmButtonColor: '#c89a0c',
-            cancelButtonText: 'Annuleer',
+            cancelButtonText: 'Annuleren',
             preConfirm: () => {
-                const name = document.getElementById('name').value;
-                const group = document.getElementById('group').value;
-                const hap = document.getElementById('hap') ? document.getElementById('hap').value : null;
-
-                if (!name || !group) {
-                    Swal.showValidationMessage('Alle velden zijn verplicht.');
-                    return false;
-                }
-
-                return { name, group, hap };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Call your save function here with the collected data
-                console.log(result.value);
-                // Add API call to save organization...
+                const organizationData = {
+                    name: document.getElementById('name').value,
+                    group: document.getElementById('group').value,
+                    hap: document.getElementById('hap').value // Works for both dropdown and input
+                };
+                return addOrganization(organizationData);
             }
         });
     }
-}
 
 
     function addOrganization(organizationData) {
