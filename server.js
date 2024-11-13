@@ -439,33 +439,44 @@ app.post('/api/hap/add', async (req, res) => {
 
 // Endpoint to add a organization
 app.post('/api/organization/add', async (req, res) => {
-    const { name, group, hapId, selectedOrganizationId } = req.body;
+    const { name, group, hap, existingOrganizationId } = req.body;
 
     try {
-        if (selectedOrganizationId) {
-            // Link existing organization to the new HAP
-            const linkSql = 'INSERT INTO organization_hap (organization_id, hap_id) VALUES (?, ?)';
-            await pool.execute(linkSql, [selectedOrganizationId, hapId]);
+        if (existingOrganizationId) {
+            // Link existing organization to the new HAP using the junction table
+            const sql = 'INSERT INTO organization_hap (organization_id, hap_id) VALUES (?, ?)';
+            const [results] = await pool.query(sql, [existingOrganizationId, hap]);
 
-            res.json({ message: 'Existing organization linked to the new HAP successfully.' });
+            if (results.affectedRows === 0) {
+                return res.status(404).send({ message: 'Failed to link existing organization to HAP' });
+            }
+            res.send({ message: 'Existing organization linked successfully' });
         } else {
-            // Create a new organization
+            // Add new organization
             const insertOrgSql = 'INSERT INTO organizations (organization, `group`) VALUES (?, ?)';
-            const [orgResults] = await pool.execute(insertOrgSql, [name, group]);
-            const newOrgId = orgResults.insertId;
+            const [insertOrgResults] = await pool.query(insertOrgSql, [name, group]);
 
-            // Link the new organization to the HAP
-            const linkSql = 'INSERT INTO organization_hap (organization_id, hap_id) VALUES (?, ?)';
-            await pool.execute(linkSql, [newOrgId, hapId]);
+            if (insertOrgResults.affectedRows === 0) {
+                throw new Error('Insert failed, no rows affected.');
+            }
 
-            res.json({ message: 'New organization added and linked to the HAP successfully.' });
+            const newOrganizationId = insertOrgResults.insertId;
+
+            // Link the newly created organization to the HAP using the junction table
+            const insertLinkSql = 'INSERT INTO organization_hap (organization_id, hap_id) VALUES (?, ?)';
+            const [insertLinkResults] = await pool.query(insertLinkSql, [newOrganizationId, hap]);
+
+            if (insertLinkResults.affectedRows === 0) {
+                throw new Error('Failed to link new organization to HAP.');
+            }
+
+            res.send({ message: 'New organization added and linked successfully' });
         }
     } catch (error) {
-        console.error('Error adding or linking organization:', error);
-        res.status(500).json({ message: 'Error processing your request', details: error.message });
+        console.error('Error adding or linking Organization:', error);
+        res.status(500).send({ message: 'Error adding or linking Organization', details: error.message });
     }
 });
-
 
 // Endpoint to add a user
 app.post('/api/users/add', async (req, res) => {
