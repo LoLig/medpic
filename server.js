@@ -439,23 +439,34 @@ app.post('/api/hap/add', async (req, res) => {
 
 // Endpoint to add a organization
 app.post('/api/organization/add', async (req, res) => {
-    const { name, group, hap } = req.body;
+    const { name, group, hap, existingOrganizationId } = req.body;
 
-    const sql = 'INSERT INTO organizations (organization, `group`, hap) VALUES (?, ?, ?)';
     try {
-        const [results] = await pool.query(sql, [name, group, hap]);
-        // Since it's an insert operation, you can check if the affectedRows is 1 for a successful insertion
-        if (results.affectedRows === 1) {
-            res.send({ message: 'Organisatie toegevoegd' });
+        if (existingOrganizationId) {
+            // Link existing organization to the new HAP
+            const sql = 'UPDATE organizations SET hap = ? WHERE id = ?';
+            const [results] = await pool.query(sql, [hap, existingOrganizationId]);
+
+            if (results.affectedRows === 0) {
+                return res.status(404).send({ message: 'Organization not found or no changes made' });
+            }
+            res.send({ message: 'Existing organization linked successfully' });
         } else {
-            // If no rows were affected, it means the insert didn't take place
-            throw new Error('Insert failed, no rows affected.');
+            // Add new organization
+            const sql = 'INSERT INTO organizations (organization, `group`, hap) VALUES (?, ?, ?)';
+            const [results] = await pool.query(sql, [name, group, hap]);
+
+            if (results.affectedRows === 0) {
+                throw new Error('Insert failed, no rows affected.');
+            }
+            res.send({ message: 'New organization added successfully' });
         }
     } catch (error) {
-        console.error('Error adding Organization:', error);
-        res.status(500).send({ message: 'Error adding Organization', details: error.message });
+        console.error('Error adding or linking Organization:', error);
+        res.status(500).send({ message: 'Error adding or linking Organization', details: error.message });
     }
 });
+
 
 // Endpoint to add a user
 app.post('/api/users/add', async (req, res) => {

@@ -1038,7 +1038,7 @@
     function showAddOrganizationForm() {
         const userData = JSON.parse(localStorage.getItem('userData'));
 
-        // Base HTML for name and group inputs
+        // HTML content for name and group inputs
         let htmlContent = `
             <div class="form-group">
                 <label for="organization-select">Selecteer Bestaande Organisatie:</label>
@@ -1121,7 +1121,8 @@
                 const organizationData = {
                     name: document.getElementById('name').value,
                     group: document.getElementById('group').value,
-                    hap: document.getElementById('hap') ? document.getElementById('hap').value : null
+                    hap: document.getElementById('hap') ? document.getElementById('hap').value : null,
+                    existingOrganizationId: document.getElementById('organization-select').value || null
                 };
                 return addOrganization(organizationData);
             }
