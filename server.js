@@ -272,6 +272,18 @@ app.get('/api/organizations', async (req, res) => {
     }
 });
 
+app.get('/api/fillorganizations', async (req, res) => {
+    let sql = 'SELECT id, organization, `group` FROM organizations WHERE `group` != "Huisartsenpraktijk"';
+    try {
+        const [results] = await pool.query(sql);
+        res.json({ organizations: results });
+    } catch (error) {
+        console.error('Error fetching organizations:', error);
+        res.status(500).send('Error fetching organizations');
+    }
+});
+
+
 app.get('/api/users', async (req, res) => {
     let sql = `
         SELECT users.*, organizations.organization AS organization_name
