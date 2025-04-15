@@ -455,6 +455,38 @@
 
                   hapItem.appendChild(editBtn);
 
+                  // Create the Delete button
+                  const deleteBtn = document.createElement('button');
+                  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>'; // Use Font Awesome's trash icon
+                  deleteBtn.classList.add('delete-btn');
+
+                  // Define the Edit button's click event handler
+                  deleteBtn.onclick = function() {
+                      Swal.fire({
+                          title: 'Huisartsenpraktijk verwijderen?',
+                          text: "Dit kan niet worden teruggedraaid!",
+                          icon: "warning",
+                          showCancelButton: true,
+                          cancelButtonText: 'Annuleer',
+                          confirmButtonText: 'Verwijder praktijk',
+                          confirmButtonColor: '#c89a0c',
+                          buttons: true,
+                          dangerMode: true,
+                      }).then((result) => {
+                          if (result.isConfirmed) {
+                              deleteHAP(hap.id, () => {
+                                  loadHAPs(); // Reload the HAPs upon successful deletion
+                              });
+                          }
+                      });
+                  };
+
+                  // Append delete button only if the user is not linked to the HAP
+                  const userData = JSON.parse(localStorage.getItem('userData'));
+                  if (userData.hap !== hap.id) {
+                      hapItem.appendChild(deleteBtn);
+                  }
+
                   adminContent.appendChild(hapItem);
               });
             appendAddHAPButton();
@@ -489,6 +521,33 @@
         .catch((error) => {
             console.error('Error updating HAP:', error);
             Swal.fire('Error!', 'Er ging iets mis bij het updaten van de HAP.');
+        });
+    }
+
+    function deleteHAP(id, callback) {
+        fetch('/api/hap/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+            },
+            body: JSON.stringify({ id: id })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire('Verwijderd!', 'Huisartsenpraktijk succesvol verwijderd.', 'success');
+            if (callback) {
+                callback();
+            }
+        })
+        .catch((error) => {
+            console.error('Error deleting HAP:', error);
+            Swal.fire('Error!', 'Er ging iets mis bij het verwijderen van de Huisartsenpraktijk.');
         });
     }
 
